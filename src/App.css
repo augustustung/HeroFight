@@ -1,8 +1,33 @@
 /* Styles go here */
 
 .token {
-  height: 150px;
-  width: 150px;
+  height       : 150px;
+  width        : 150px;
   border-radius: 50%;
-  display: inline-block;
+  display      : inline-block;
+}
+
+.main_container {
+  width : 100vw;
+  height: 100vh;
+  margin: auto;
+}
+
+.main_container>img {
+  display   : block;
+  width     : 100%;
+  height    : 100%;
+  object-fit: cover;
+}
+
+.main_container>.component {
+  position : absolute;
+  top      : 50%;
+  left     : 50%;
+  transform: translate(-50%, -50%);
+}
+
+* {
+  box-sizing : border-box;
+  font-family: 'Press Start 2P', cursive;
 }

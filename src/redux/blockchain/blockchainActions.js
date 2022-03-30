@@ -1,5 +1,5 @@
 import Web3 from "web3"
-import LipToken from '../../abis/LipToken.json'
+// import LipToken from '../../abis/LipToken.json'
 
 export const actionTypes = Object.freeze({
   CONNECTION_REQUEST: "CONNECTION_REQUEST",
@@ -30,42 +30,42 @@ const updateAccount = (payload) => ({
 export const handleConnect = () => {
   return async (dispatch) => {
     dispatch(connectRequest())
-    if (window.ethereum) {
-      let web3 = new Web3(window.ethereum)
-      // open pop-up request connect with metamask
-      try {
-        const accounts = await window.ethereum.request({
-          method: "eth_requestAccounts"
-        })
-        const networkId = await window.ethereum.request({
-          method: "net_version"
-        })
-        const lipTokenNetworkData = await LipToken.networks[networkId]
-        if (lipTokenNetworkData) {
-          const lipToken = new web3.eth.Contract(LipToken.abi, lipTokenNetworkData.address)
-          dispatch(connectSuccess({
-            account: accounts[0],
-            lipToken: lipToken,
-            web3: web3
-          }))
+    // if (window.ethereum) {
+    //   let web3 = new Web3(window.ethereum)
+    //   // open pop-up request connect with metamask
+    //   try {
+    //     const accounts = await window.ethereum.request({
+    //       method: "eth_requestAccounts"
+    //     })
+    //     const networkId = await window.ethereum.request({
+    //       method: "net_version"
+    //     })
+    //     const lipTokenNetworkData = await LipToken.networks[networkId]
+    //     if (lipTokenNetworkData) {
+    //       const lipToken = new web3.eth.Contract(LipToken.abi, lipTokenNetworkData.address)
+    //       dispatch(connectSuccess({
+    //         account: accounts[0],
+    //         lipToken: lipToken,
+    //         web3: web3
+    //       }))
 
-          // add listeners start
-          window.ethereum.on("accountsChanged", (accounts) => {
-            dispatch(updateAccount(accounts[0]))
-          })
-          window.ethereum.on('chainChanged', () => {
-            window.location.reload()
-          })
-        } else {
-          // add listeners end
-          dispatch(connectFailed("Change network to ETH."))
-        }
-      } catch (error) {
-        dispatch(connectFailed('Non-Ethereum browser detected. You should consider trying MetaMask!'))
-        console.log('err', error)
-      }
-    } else {
-      dispatch(connectFailed('Non-Ethereum browser detected. You should consider trying MetaMask!'))
-    }
+    //       // add listeners start
+    //       window.ethereum.on("accountsChanged", (accounts) => {
+    //         dispatch(updateAccount(accounts[0]))
+    //       })
+    //       window.ethereum.on('chainChanged', () => {
+    //         window.location.reload()
+    //       })
+    //     } else {
+    //       // add listeners end
+    //       dispatch(connectFailed("Change network to ETH."))
+    //     }
+    //   } catch (error) {
+    //     dispatch(connectFailed('Non-Ethereum browser detected. You should consider trying MetaMask!'))
+    //     console.log('err', error)
+    //   }
+    // } else {
+    //   dispatch(connectFailed('Non-Ethereum browser detected. You should consider trying MetaMask!'))
+    // }
   }
 }
