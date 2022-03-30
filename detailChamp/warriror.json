@@ -1,0 +1,55 @@
+{
+  "position": {
+    "x": 346.5,
+    "y": 0
+  },
+  "velocity": {
+    "x": 0,
+    "y": 0
+  },
+  "imageSrc": "./img/warrior/Idle.png",
+  "framesMax": 10,
+  "scale": 2.5,
+  "offset": {
+    "x": 215,
+    "y": 100
+  },
+  "sprites": {
+    "idle": {
+      "imageSrc": "./img/warrior/Idle.png",
+      "framesMax": 10
+    },
+    "run": {
+      "imageSrc": "./img/warrior/Run.png",
+      "framesMax": 8
+    },
+    "jump": {
+      "imageSrc": "./img/warrior/Jump.png",
+      "framesMax": 3
+    },
+    "fall": {
+      "imageSrc": "./img/warrior/Fall.png",
+      "framesMax": 3
+    },
+    "attack1": {
+      "imageSrc": "./img/warrior/Attack1.png",
+      "framesMax": 7
+    },
+    "takeHit": {
+      "imageSrc": "./img/warrior/Take Hit - white silhouette.png",
+      "framesMax": 3
+    },
+    "death": {
+      "imageSrc": "./img/warrior/Death.png",
+      "framesMax": 7
+    }
+  },
+  "attackBox": {
+    "offset": {
+      "x": 20,
+      "y": 65
+    },
+    "width": 100,
+    "height": 50
+  }
+}

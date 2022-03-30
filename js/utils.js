@@ -25,6 +25,7 @@ function determineWinner({ player, enemy, timerId }) {
   buttonPlay.style.display = 'block';
   buttonPlay.style.marginTop = '32%';
   document.querySelector('#startGame p').textContent = 'Back to room'
+  buttonPlay.removeEventListener('click', null);
   buttonPlay.addEventListener('click', () => window.location.reload())
 }
 

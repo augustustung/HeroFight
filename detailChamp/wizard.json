@@ -1,0 +1,55 @@
+{
+  "position": {
+    "x": 406.5,
+    "y": 0
+  },
+  "velocity": {
+    "x": 0,
+    "y": 0
+  },
+  "imageSrc": "./img/wizard/Idle.png",
+  "framesMax": 6,
+  "scale": 1.5,
+  "offset": {
+    "x": 215,
+    "y": 60
+  },
+  "sprites": {
+    "idle": {
+      "imageSrc": "./img/wizard/Idle.png",
+      "framesMax": 6
+    },
+    "run": {
+      "imageSrc": "./img/wizard/Run.png",
+      "framesMax": 8
+    },
+    "jump": {
+      "imageSrc": "./img/wizard/Jump.png",
+      "framesMax": 2
+    },
+    "fall": {
+      "imageSrc": "./img/wizard/Fall.png",
+      "framesMax": 2
+    },
+    "attack1": {
+      "imageSrc": "./img/wizard/Attack1.png",
+      "framesMax": 8
+    },
+    "takeHit": {
+      "imageSrc": "./img/wizard/Take hit",
+      "framesMax": 4
+    },
+    "death": {
+      "imageSrc": "./img/wizard/Death.png",
+      "framesMax": 7
+    }
+  },
+  "attackBox": {
+    "offset": {
+      "x": -10,
+      "y": 65
+    },
+    "width": 100,
+    "height": 50
+  }
+}
