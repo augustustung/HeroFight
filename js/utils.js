@@ -42,6 +42,9 @@ function decreaseTimer() {
   }
 }
 
+let isPlayerJump = false;
+let isEnemyJump = false;
+
 function startGame(e) {
   e.preventDefault();
   if (isStart) { return; }
@@ -59,7 +62,11 @@ function startGame(e) {
           player.lastKey = 'a'
           break
         case 'w':
-          player.velocity.y = -20
+          if (!isPlayerJump) {
+            isPlayerJump = true;
+            player.velocity.y = -20;
+            setTimeout(() => { isPlayerJump = false }, 1000)
+          }
           break
         case ' ':
           player.attack()
@@ -78,8 +85,12 @@ function startGame(e) {
           enemy.lastKey = 'ArrowLeft'
           break
         case 'ArrowUp':
-          enemy.velocity.y = -20
-          break
+          if (!isEnemyJump) {
+            enemy.velocity.y = -20;
+            isEnemyJump = true;
+            setTimeout(() => { isEnemyJump = false }, 1000)
+          }
+          break;
         case 'ArrowDown':
           enemy.attack()
 
