@@ -12,7 +12,7 @@
   "scale": 2.5,
   "color": "blue",
   "offset": {
-    "x": 215,
+    "x": 165,
     "y": 100
   },
   "sprites": {
@@ -47,10 +47,12 @@
   },
   "attackBox": {
     "offset": {
-      "x": -160,
+      "x": -90,
       "y": 65
     },
-    "width": 100,
+    "width": 90,
     "height": 40
-  }
+  },
+  "minX": 5,
+  "maxX": 945
 }

@@ -2,10 +2,14 @@ import React, { useEffect, useRef, useState } from 'react'
 import "./main_page.scss"
 import Sprite from '../../oop/Sprite';
 import Fighter from '../../oop/Fighter';
-import Hero from '../../oop/champ/hero.json'
-import HeroEnemy from '../../oop/champ/heroEnemy.json'
 import WarrirorEnemy from '../../oop/champ/warrirorEnemy.json'
+import Warriror from '../../oop/champ/warriror.json'
+import Wizard from '../../oop/champ/wizard.json'
+import WizardEnemy from '../../oop/champ/wizardEnemy.json'
 import SamuraiMackEnemy from '../../oop/champ/samuraiMackEnemy.json'
+import SamuraiMack from '../../oop/champ/samuraiMack.json'
+import HeroEnemy from '../../oop/champ/heroEnemy.json'
+import Hero from '../../oop/champ/hero.json'
 import gsap from 'gsap';
 
 const background = new Sprite({
@@ -27,9 +31,9 @@ const shop = new Sprite({
   framesMax: 6
 })
 
-const player = new Fighter(Hero)
+const player = new Fighter(Wizard)
 
-const enemy = new Fighter(SamuraiMackEnemy)
+const enemy = new Fighter(WarrirorEnemy)
 
 const keys = {
   a: {
@@ -82,22 +86,18 @@ function MainPage() {
     // player movement
 
     if (keys.a.pressed && player.lastKey === 'a') {
-      console.log(player.position.x);
-
-      // if (player.position.x <= 10 || player.isAttacking) {
-      //   player.velocity.x = 0;
-      // } else {
-      player.velocity.x = -5;
-      // }
+      if (player.position.x <= player.minX || player.isAttacking) {
+        player.velocity.x = 0;
+      } else {
+        player.velocity.x = -5;
+      }
       player.switchSprite('run')
     } else if (keys.d.pressed && player.lastKey === 'd') {
-      console.log(player.position.x);
-
-      // if (player.position.x >= 940 || player.isAttacking) {
-      //   player.velocity.x = 0;
-      // } else {
-      player.velocity.x = 5;
-      // }
+      if (player.position.x >= player.maxX || player.isAttacking) {
+        player.velocity.x = 0;
+      } else {
+        player.velocity.x = 5;
+      }
       player.switchSprite('run')
     } else {
       player.switchSprite('idle')
@@ -112,17 +112,14 @@ function MainPage() {
 
     // Enemy movement
     if (keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft') {
-      console.log(enemy.position.x);
-      if (enemy.position.x <= 10 || enemy.isAttacking) {
+      if (enemy.position.x <= enemy.minX || enemy.isAttacking) {
         enemy.velocity.x = 0;
       } else {
         enemy.velocity.x = -5;
       }
       enemy.switchSprite('run')
     } else if (keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight') {
-      console.log(enemy.position.x);
-
-      if (enemy.position.x >= 940 || enemy.isAttacking) {
+      if (enemy.position.x >= enemy.maxX || enemy.isAttacking) {
         enemy.velocity.x = 0;
       } else {
         enemy.velocity.x = 5;
@@ -210,8 +207,10 @@ function MainPage() {
       document.querySelector('#displayText').innerHTML = 'Tie'
     } else if (player.health > enemy.health) {
       document.querySelector('#displayText').innerHTML = 'Player 1 Wins'
+      enemy.switchSprite('death')
     } else if (player.health < enemy.health) {
       document.querySelector('#displayText').innerHTML = 'Player 2 Wins'
+      player.switchSprite('death')
     }
     window.removeEventListener('keydown', playerAction)
     window.removeEventListener('keyup', enemyAction)
@@ -280,7 +279,6 @@ function MainPage() {
       }
     }
   }
-
   function enemyAction(event) {
     switch (event.key) {
       case 'd':

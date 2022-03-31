@@ -1,6 +1,6 @@
 {
   "position": {
-    "x": 406.5,
+    "x": 266.5,
     "y": 0
   },
   "velocity": {
@@ -12,7 +12,7 @@
   "scale": 1.5,
   "color": "red",
   "offset": {
-    "x": 215,
+    "x": 115,
     "y": 60
   },
   "sprites": {
@@ -37,7 +37,7 @@
       "framesMax": 8
     },
     "takeHit": {
-      "imageSrc": "/img/wizard/Take Hit",
+      "imageSrc": "/img/wizard/Take Hit.png",
       "framesMax": 4
     },
     "death": {
@@ -47,10 +47,12 @@
   },
   "attackBox": {
     "offset": {
-      "x": -10,
+      "x": 100,
       "y": 65
     },
-    "width": 100,
+    "width": 90,
     "height": 50
-  }
+  },
+  "minX": 5,
+  "maxX": 925
 }

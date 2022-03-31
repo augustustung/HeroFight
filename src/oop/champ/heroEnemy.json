@@ -1,6 +1,6 @@
 {
   "position": {
-    "x": 716.5,
+    "x": 666.5,
     "y": 100
   },
   "velocity": {
@@ -12,7 +12,7 @@
   "scale": 2.5,
   "color": "blue",
   "offset": {
-    "x": 215,
+    "x": 140,
     "y": 55
   },
   "sprites": {
@@ -47,12 +47,12 @@
   },
   "attackBox": {
     "offset": {
-      "x": -180,
+      "x": -95,
       "y": 80
     },
-    "width": 90,
+    "width": 80,
     "height": 50
   },
-  "minX": 1006.5,
-  "maxX": 86.5
+  "minX": 15,
+  "maxX": 945
 }
