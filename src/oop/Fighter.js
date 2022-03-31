@@ -12,6 +12,8 @@ class Fighter extends Sprite {
     framesMax = 1,
     offset = { x: 0, y: 0 },
     sprites,
+    minX,
+    maxX,
     attackBox = { offset: {}, width: undefined, height: undefined }
   }) {
     super({
@@ -19,13 +21,17 @@ class Fighter extends Sprite {
       imageSrc,
       scale,
       framesMax,
-      offset
+      offset,
+      minX,
+      maxX,
     })
-
+    this.minX = minX
+    this.maxX = maxX
     this.velocity = velocity
     this.width = 50
     this.height = 150
     this.lastKey = "";
+    this.isJumping = false;
     this.attackBox = {
       position: {
         x: this.position.x,

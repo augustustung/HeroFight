@@ -10,7 +10,7 @@
   "imageSrc": "/img/wizard/Idle.png",
   "framesMax": 6,
   "scale": 1.5,
-  "color": "red",
+  "color": "blue",
   "offset": {
     "x": 215,
     "y": 60

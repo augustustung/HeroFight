@@ -1,0 +1,58 @@
+{
+  "position": {
+    "x": 716.5,
+    "y": 100
+  },
+  "velocity": {
+    "x": 0,
+    "y": 0
+  },
+  "imageSrc": "/img/heroEnemy/Idle.png",
+  "framesMax": 11,
+  "scale": 2.5,
+  "color": "blue",
+  "offset": {
+    "x": 215,
+    "y": 55
+  },
+  "sprites": {
+    "idle": {
+      "imageSrc": "/img/heroEnemy/Idle.png",
+      "framesMax": 11
+    },
+    "run": {
+      "imageSrc": "/img/heroEnemy/Run.png",
+      "framesMax": 8
+    },
+    "jump": {
+      "imageSrc": "/img/heroEnemy/Jump.png",
+      "framesMax": 4
+    },
+    "fall": {
+      "imageSrc": "/img/heroEnemy/Fall.png",
+      "framesMax": 4
+    },
+    "attack1": {
+      "imageSrc": "/img/heroEnemy/Attack.png",
+      "framesMax": 6
+    },
+    "takeHit": {
+      "imageSrc": "/img/heroEnemy/Take Hit.png",
+      "framesMax": 4
+    },
+    "death": {
+      "imageSrc": "/img/heroEnemy/Death.png",
+      "framesMax": 9
+    }
+  },
+  "attackBox": {
+    "offset": {
+      "x": -180,
+      "y": 80
+    },
+    "width": 90,
+    "height": 50
+  },
+  "minX": 1006.5,
+  "maxX": 86.5
+}
