@@ -54,5 +54,9 @@
     "height": 40
   },
   "minX": 5,
-  "maxX": 945
+  "maxX": 945,
+  "attackSpeed": "900",
+  "damage": "71.3",
+  "defense": "36.5",
+  "hp": "635"
 }

@@ -14,16 +14,18 @@ class Fighter extends Sprite {
     sprites,
     minX,
     maxX,
-    attackBox = { offset: {}, width: undefined, height: undefined }
+    attackBox = { offset: {}, width: undefined, height: undefined },
+    attackSpeed,
+    damage,
+    defense,
+    hp
   }) {
     super({
       position,
       imageSrc,
       scale,
       framesMax,
-      offset,
-      minX,
-      maxX,
+      offset
     })
     this.minX = minX
     this.maxX = maxX
@@ -43,12 +45,17 @@ class Fighter extends Sprite {
     }
     this.color = color
     this.isAttacking = false;
-    this.health = 100
+    this.health = hp
     this.framesCurrent = 0
     this.framesElapsed = 0
     this.framesHold = 5
     this.sprites = sprites
     this.dead = false
+    this.lastTimeAttack = new Date().getTime()
+    this.attackSpeed = attackSpeed
+    this.damage = damage
+    this.defense = defense
+    this.hp = hp
 
     for (const sprite in this.sprites) {
       sprites[sprite].image = new Image()
@@ -83,16 +90,20 @@ class Fighter extends Sprite {
   }
 
   attack() {
-    this.switchSprite('attack1')
-    this.isAttacking = true
+    if (new Date().getTime() - this.lastTimeAttack >= this.attackSpeed) {
+      this.switchSprite('attack1')
+      this.isAttacking = true
+      this.lastTimeAttack = new Date().getTime()
+    }
   }
 
-  takeHit() {
-    this.health -= 20
-
+  takeHit(receiveAtk) {
+    this.health -= Math.abs(receiveAtk - this.defense * 0.5)
     if (this.health <= 0) {
       this.switchSprite('death')
-    } else this.switchSprite('takeHit')
+    } else {
+      this.switchSprite('takeHit')
+    }
   }
 
   switchSprite(sprite) {

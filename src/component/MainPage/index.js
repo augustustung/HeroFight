@@ -31,7 +31,7 @@ const shop = new Sprite({
   framesMax: 6
 })
 
-const player = new Fighter(Wizard)
+const player = new Fighter(SamuraiMack)
 
 const enemy = new Fighter(WarrirorEnemy)
 
@@ -145,11 +145,11 @@ function MainPage() {
       player.isAttacking &&
       player.framesCurrent === 4
     ) {
-      enemy.takeHit()
+      enemy.takeHit(player.damage)
       player.isAttacking = false
 
       gsap.to('#enemyHealth', {
-        width: enemy.health + '%'
+        width: enemy.health / enemy.hp * 100 + '%'
       })
     }
 
@@ -167,11 +167,11 @@ function MainPage() {
       enemy.isAttacking &&
       enemy.framesCurrent === 2
     ) {
-      player.takeHit()
+      player.takeHit(enemy.damage)
       enemy.isAttacking = false
 
       gsap.to('#playerHealth', {
-        width: player.health + '%'
+        width: player.health / player.hp * 100 + '%'
       })
     }
 
