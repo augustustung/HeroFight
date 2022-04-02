@@ -55,7 +55,7 @@
   },
   "maxX": 940,
   "minX": 10,
-  "attackSpeed": "900",
+  "attackSpeed": "200",
   "damage": "60.4",
   "defense": "31.5",
   "hp": "665"

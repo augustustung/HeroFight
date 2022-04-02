@@ -316,45 +316,49 @@ function MainPage() {
   }
 
   return (
-    <div className='main_page_container' style={{
-      backgroundImage: `url(${window.origin + "/img/outline.png"}`
-    }}>
-      <div className='outline'>
-        <div className='health'>
-          <div className='lose_health'></div>
-          <div id="playerHealth"></div>
-        </div>
+    <>
+      <img src={window.origin + '/img/background_full.png'} />
+      <div className='main_page_container'>
+        <div className='fight_screen' style={{
+          backgroundImage: `url(${window.origin + "/img/outline.png"}`
+        }}>
+          <div className='outline'>
+            <div className='health'>
+              <div className='lose_health'></div>
+              <div id="playerHealth"></div>
+            </div>
 
-        <div ref={timerRef} id="timer">10</div>
-        <div className='health'>
-          <div className='lose_health'></div>
-          <div id="enemyHealth"></div>
+            <div ref={timerRef} id="timer">10</div>
+            <div className='health'>
+              <div className='lose_health'></div>
+              <div id="enemyHealth"></div>
+            </div>
+            <div></div>
+          </div>
+          <div id="displayText">
+            Tie
+          </div>
+          <div
+            id="startGame"
+            onClick={(e) => {
+              isDone ?
+                resetGame(e) :
+                startGame(e)
+            }}
+            style={{
+              display: (!isDone && isStart) ? 'none' : 'block',
+              marginTop: (!isDone && isStart) ? 'auto' : '32%'
+            }}
+          >
+            <div>
+              <img width="270" height="110" src={window.origin + "/img/fight.png"} />
+              <p>{isDone ? "Back to room" : "Play"}</p>
+            </div>
+          </div>
+          <canvas width={1024} height={576} ref={canvasRef}></canvas>
         </div>
-        <div></div>
       </div>
-      <div id="displayText">
-        Tie
-      </div>
-      <div
-        id="startGame"
-        onClick={(e) => {
-          isDone ?
-            resetGame(e) :
-            startGame(e)
-        }}
-        style={{
-          display: (!isDone && isStart) ? 'none' : 'block',
-          marginTop: (!isDone && isStart) ? 'auto' : '32%'
-        }}
-      >
-        <div>
-          <img width="270" height="110" src={window.origin + "/img/fight.png"} />
-          <p>{isDone ? "Back to room" : "Play"}</p>
-        </div>
-      </div>
-      <canvas width={1024} height={576} ref={canvasRef}></canvas>
-    </div>
-
+    </>
   )
 }
 

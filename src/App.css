@@ -20,7 +20,7 @@
   object-fit: cover;
 }
 
-.main_container>.component {
+.main_container>.main_page_container {
   position : absolute;
   top      : 50%;
   left     : 50%;
@@ -30,4 +30,32 @@
 * {
   box-sizing : border-box;
   font-family: 'Press Start 2P', cursive;
+}
+
+.user_balance {
+  color: #fff;
+}
+
+.button_collect_wallet {
+  height: 3.188rem;
+  display: flex;
+  -webkit-box-align: center;
+  align-items: center;
+  background-color: rgb(255, 151, 58) !important;
+  padding: 0px 1rem;
+  border: none;
+  box-shadow: none;
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1.14;
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+}
+
+.button_collect_wallet img {
+  margin-right: 1rem;
+  vertical-align: middle;
+  border-style: none;
+  background-color: transparent;
+  height: 1.938rem;
 }

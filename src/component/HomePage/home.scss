@@ -1,0 +1,140 @@
+.home_body {
+  background-repeat: no-repeat;
+  background-size: cover;
+  padding-top: 40px;
+  height: 100vh;
+
+  &__list_bg {
+    .bar {
+      vertical-align: middle;
+    }
+  
+    .quantity {
+      bottom: 10px;
+      width: 91%;
+    }
+  
+    .button_copy {
+      right: 0;
+      bottom: -60px;
+      width: 50px;
+      cursor: pointer;
+      height: 30px;
+    }
+  
+    .hero_address { 
+      margin-top: 15px;
+      font-size: 17px;
+      font-weight: 700;
+      font-family:'Courier New', Courier, monospace;
+    }
+
+    .detail {
+      font-size: 12px;
+      line-height: 21px;
+    }
+  }
+
+  .room_list_area {
+    background-color: #fff;
+    width: 1024px;
+    height: 576px;
+    border-radius: 8px;
+    margin-left: auto;
+    margin-right: auto;
+
+    .body {
+      height: 90%;
+      ul {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 12px;
+        margin: 0;
+      
+        li {
+          list-style: none;
+          padding: 5px;
+          margin-top: 4px;
+          width: 100%;
+          border-radius: 8px;
+          border: 1px solid #f4f4f4;
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+
+          div:first-child {
+            margin-right: 34px;
+          }
+
+          div:nth-child(3) {
+            margin-left: auto;
+            margin-right: 34px;
+          }
+        }
+      }
+    }
+
+    .footer {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      padding-right: 15px;
+    }
+  }
+}
+
+@media(max-width:1200.5px) {
+  .home_body {
+    .hero_sold { 
+      font-size: 17px;
+    }
+
+    .detail-hero {
+      margin-top: 13px;
+      .text {
+        font-size: 19px;
+      }
+    }
+    .detail {
+      font-size: 14px;
+    }
+  }
+}
+
+@media(max-width: 999px) {
+  .home_body {
+    .bar {
+      height: 59.81px;
+      width: 80% !important;
+    }
+
+    .quantity {
+      bottom: 25px;
+    }
+
+    .detail-hero {
+      margin-top: 13px;
+      .text {
+        font-size: 14px;
+      }
+    }
+    .detail {
+      font-size: 12px;
+    }
+  }
+}
+
+@media (max-width: 768.5px) {
+  .home_body {
+    .input_long {
+      height: 50px !important;
+    }
+
+    .detail-hero {
+      margin-top: 13px;
+      .text {
+        font-size: 20px;
+      }
+    }
+  }
+}
