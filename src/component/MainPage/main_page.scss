@@ -110,3 +110,14 @@
     z-index: 3;
   }
 }
+
+.timeStart {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  top: 0;
+  transform: translateY(50%);
+  font-size: 100px;
+  color: crimson;
+  z-index: 100;
+}

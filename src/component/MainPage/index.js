@@ -2,14 +2,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import "./main_page.scss"
 import Sprite from '../../oop/Sprite';
 import Fighter from '../../oop/Fighter';
-import WarrirorEnemy from '../../oop/champ/warrirorEnemy.json'
-import Warriror from '../../oop/champ/warriror.json'
-import Wizard from '../../oop/champ/wizard.json'
-import WizardEnemy from '../../oop/champ/wizardEnemy.json'
-import SamuraiMackEnemy from '../../oop/champ/samuraiMackEnemy.json'
-import SamuraiMack from '../../oop/champ/samuraiMack.json'
-import HeroEnemy from '../../oop/champ/heroEnemy.json'
-import Hero from '../../oop/champ/hero.json'
 import gsap from 'gsap';
 
 const background = new Sprite({
@@ -31,288 +23,146 @@ const shop = new Sprite({
   framesMax: 6
 })
 
-const player = new Fighter(SamuraiMack)
-
-const enemy = new Fighter(WarrirorEnemy)
-
-const keys = {
-  a: {
-    pressed: false
-  },
-  d: {
-    pressed: false
-  },
-  ArrowRight: {
-    pressed: false
-  },
-  ArrowLeft: {
-    pressed: false
-  }
-}
-
-let timer = 60
 let timerId
+let count = 4
 
-function MainPage() {
+let player
+let enemy
+
+function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
   const canvasRef = useRef()
   const timerRef = useRef()
+  const countDownRef = useRef()
   const [isStart, setIsStart] = useState(false)
   const [isDone, setIsDone] = useState(false)
+  const [isFirstTime, setIsFirstTime] = useState(true)
+
+  function handleCountdown() {
+    if (countDownRef.current) {
+      setTimeout(() => {
+        if (count > 0) {
+          timerId = setTimeout(handleCountdown, 500)
+          count--
+          countDownRef.current.innerHTML = count
+        }
+        if (count === 0) {
+          clearTimeout(timerId)
+          countDownRef.current.innerHTML = 'FIGHT!'
+          setTimeout(() => {
+            countDownRef.current.innerHTML = ''
+            setIsStart(true)
+          }, 500)
+        }
+      }, 500);
+    }
+  }
+
+  async function handleStartGame() {
+    if (!isStart && !isDone) {
+      timerId = setTimeout(handleCountdown, 500)
+      window.addEventListener('keyup', onKeyUp)
+      window.addEventListener('keydown', onKeyDown)
+      // get detail champ
+      client.emit('fight!', {
+        roomIndex: currentRoom.roomIndex,
+        isHost: playerDetail.isHost,
+        champ: new Fighter(require(`../../oop/champ/${playerDetail.isHost ? currentRoom.players[0].champion : currentRoom.players[1].champion}${playerDetail.isHost ? ".json" : "Enemy.json"}`))
+      })
+    }
+  }
+
+  function setStateFighter({ playerData, enemyData }) {
+    if (playerData) {
+      player = playerData
+    }
+    if (enemyData) {
+      enemy = enemyData
+    }
+  }
+
+  function handleEmitAction(payload) {
+    if (!isDone && isStart) {
+      client.emit('player_do_action', {
+        roomIndex: currentRoom.roomIndex,
+        key: payload
+      }, setStateFighter)
+    }
+  }
 
   useEffect(() => {
-    if (canvasRef && canvasRef.current) {
-      const c = canvasRef.current.getContext('2d')
-      c.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height)
-      animate()
+    if (!client) return
+
+    client.on('start_game', handleStartGame)
+
+    if (isFirstTime) {
+      client.emit('player_load_completely', {
+        roomIndex: currentRoom.roomIndex
+      }, (res) => {
+        if (res) {
+          if (res.errCode === 0) {
+            handleStartGame()
+          } else {
+            console.log(res.errMessage)
+          }
+        } else {
+          console.log('error when play', res.errMessage)
+        }
+      })
+      setIsFirstTime(false)
     }
-  }, [canvasRef])
+
+    client.on('receive_action', setStateFighter)
+
+    client.on('game_over', ({
+      result,
+      winner
+    }) => {
+      timerRef.current.innerHTML = 0
+      window.removeEventListener('keyup', onKeyUp)
+      window.removeEventListener('keydown', onKeyDown)
+      document.querySelector('#displayText').style.display = 'flex'
+      document.querySelector('#displayText').innerHTML = result
+      setIsDone(true)
+      // transfer to winner ....
+    })
+
+    client.on('battle_update', (res) => {
+      timerRef.current.innerHTML = res
+    })
+
+    // if (canvasRef && canvasRef.current) {
+    //   animate()
+    // }
+  }, [client, isFirstTime, setIsFirstTime])
 
   async function animate() {
     const c = await canvasRef.current.getContext('2d')
+    c.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height)
     const canvas = canvasRef.current
-    window.requestAnimationFrame(animate)
     c.fillStyle = 'black'
     c.fillRect(0, 0, canvas.width, canvas.height)
     background.update(c)
     shop.update(c)
     c.fillStyle = 'rgba(255, 255, 255, 0.15)'
     c.fillRect(0, 0, canvas.width, canvas.height)
-    player.update(c, canvas)
-    enemy.update(c, canvas)
-
-    player.velocity.x = 0
-    enemy.velocity.x = 0
-
-    // player movement
-
-    if (keys.a.pressed && player.lastKey === 'a') {
-      if (player.position.x <= player.minX || player.isAttacking) {
-        player.velocity.x = 0;
-      } else {
-        player.velocity.x = -5;
-      }
-      player.switchSprite('run')
-    } else if (keys.d.pressed && player.lastKey === 'd') {
-      if (player.position.x >= player.maxX || player.isAttacking) {
-        player.velocity.x = 0;
-      } else {
-        player.velocity.x = 5;
-      }
-      player.switchSprite('run')
-    } else {
-      player.switchSprite('idle')
-    }
-
-    // jumping
-    if (player.velocity.y < 0) {
-      player.switchSprite('jump')
-    } else if (player.velocity.y > 0) {
-      player.switchSprite('fall')
-    }
-
-    // Enemy movement
-    if (keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft') {
-      if (enemy.position.x <= enemy.minX || enemy.isAttacking) {
-        enemy.velocity.x = 0;
-      } else {
-        enemy.velocity.x = -5;
-      }
-      enemy.switchSprite('run')
-    } else if (keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight') {
-      if (enemy.position.x >= enemy.maxX || enemy.isAttacking) {
-        enemy.velocity.x = 0;
-      } else {
-        enemy.velocity.x = 5;
-      }
-      enemy.switchSprite('run')
-    } else {
-      enemy.switchSprite('idle')
-    }
-
-    // jumping
-    if (enemy.velocity.y < 0) {
-      enemy.switchSprite('jump')
-    } else if (enemy.velocity.y > 0) {
-      enemy.switchSprite('fall')
-    }
-
-    // detect for collision & enemy gets hit
-    if (
-      rectangularCollision({
-        rectangle1: player,
-        rectangle2: enemy
-      }) &&
-      player.isAttacking &&
-      player.framesCurrent === 4
-    ) {
-      enemy.takeHit(player.damage)
-      player.isAttacking = false
-
-      gsap.to('#enemyHealth', {
-        width: enemy.health / enemy.hp * 100 + '%'
-      })
-    }
-
-    // if player misses
-    if (player.isAttacking && player.framesCurrent === 4) {
-      player.isAttacking = false
-    }
-
-    // this is where our player gets hit
-    if (
-      rectangularCollision({
-        rectangle1: enemy,
-        rectangle2: player
-      }) &&
-      enemy.isAttacking &&
-      enemy.framesCurrent === 2
-    ) {
-      player.takeHit(enemy.damage)
-      enemy.isAttacking = false
-
-      gsap.to('#playerHealth', {
-        width: player.health / player.hp * 100 + '%'
-      })
-    }
-
-    // if player misses
-    if (enemy.isAttacking && enemy.framesCurrent === 2) {
-      enemy.isAttacking = false
-    }
-
-    // end game based on health
-    if (enemy.health <= 0 || player.health <= 0) {
-      window.removeEventListener('keydown', playerAction)
-      window.removeEventListener('keyup', enemyAction)
-      determineWinner({ player, enemy, timerId })
-    }
   }
 
-  function rectangularCollision({ rectangle1, rectangle2 }) {
-    return (
-      rectangle1.attackBox.position.x + rectangle1.attackBox.width >=
-      rectangle2.position.x &&
-      rectangle1.attackBox.position.x <=
-      rectangle2.position.x + rectangle2.width &&
-      rectangle1.attackBox.position.y + rectangle1.attackBox.height >=
-      rectangle2.position.y &&
-      rectangle1.attackBox.position.y <= rectangle2.position.y + rectangle2.height
-    )
+  function onKeyUp(event) {
+    handleEmitAction({
+      roomIndex: currentRoom.roomIndex,
+      key: event.key,
+      type: "DOWN",
+      isHost: playerDetail.isHost
+    })
   }
 
-  function determineWinner({ player, enemy, timerId }) {
-    clearTimeout(timerId);
-    document.querySelector('#displayText').style.display = 'flex'
-    if (player.health === enemy.health) {
-      document.querySelector('#displayText').innerHTML = 'Tie'
-    } else if (player.health > enemy.health) {
-      document.querySelector('#displayText').innerHTML = 'Player 1 Wins'
-      enemy.switchSprite('death')
-    } else if (player.health < enemy.health) {
-      document.querySelector('#displayText').innerHTML = 'Player 2 Wins'
-      player.switchSprite('death')
-    }
-    window.removeEventListener('keydown', playerAction)
-    window.removeEventListener('keyup', enemyAction)
-    player.velocity.x = 0
-    enemy.velocity.x = 0
-    setIsDone(true)
-  }
-
-  function decreaseTimer() {
-    if (timer > 0) {
-      timerId = setTimeout(decreaseTimer, 1000)
-      timer--
-      timerRef.current.innerHTML = timer
-    }
-
-    if (timer === 0) {
-      determineWinner({ player, enemy, timerId })
-    }
-  }
-
-  function playerAction(event) {
-    if (!player.dead) {
-      switch (event.key) {
-        case 'd':
-          keys.d.pressed = true
-          player.lastKey = 'd'
-          break
-        case 'a':
-          keys.a.pressed = true
-          player.lastKey = 'a'
-          break
-        case 'w':
-          if (!player.isJumping) {
-            player.isJumping = true;
-            player.velocity.y = -20;
-            setTimeout(() => { player.isJumping = false }, 1000)
-          }
-          break
-        case ' ':
-          player.attack()
-          break
-      }
-    }
-
-    if (!enemy.dead) {
-      switch (event.key) {
-        case 'ArrowRight':
-          keys.ArrowRight.pressed = true
-          enemy.lastKey = 'ArrowRight'
-          break
-        case 'ArrowLeft':
-          keys.ArrowLeft.pressed = true
-          enemy.lastKey = 'ArrowLeft'
-          break
-        case 'ArrowUp':
-          if (!enemy.isJumping) {
-            enemy.velocity.y = -20;
-            enemy.isJumping = true;
-            setTimeout(() => { enemy.isJumping = false }, 1000)
-          }
-          break;
-        case 'ArrowDown':
-          enemy.attack()
-
-          break
-      }
-    }
-  }
-  function enemyAction(event) {
-    switch (event.key) {
-      case 'd':
-        keys.d.pressed = false
-        break
-      case 'a':
-        keys.a.pressed = false
-        break
-    }
-
-    // enemy keys
-    switch (event.key) {
-      case 'ArrowRight':
-        keys.ArrowRight.pressed = false
-        break
-      case 'ArrowLeft':
-        keys.ArrowLeft.pressed = false
-        break
-    }
-  }
-
-  function startGame(e) {
-    e.preventDefault();
-    if (isStart) { return; }
-    decreaseTimer()
-
-    window.addEventListener('keydown', playerAction)
-    window.addEventListener('keyup', enemyAction)
-
-    setIsStart(true)
-  }
-
-  function resetGame() {
-    window.location.reload()
+  function onKeyDown(event) {
+    handleEmitAction({
+      roomIndex: currentRoom.roomIndex,
+      key: event.key,
+      type: "Down",
+      isHost: playerDetail.isHost
+    })
   }
 
   return (
@@ -335,29 +185,28 @@ function MainPage() {
             </div>
             <div></div>
           </div>
-          <div id="displayText">
-            Tie
-          </div>
+          <div id="displayText">Tie</div>
           <div
             id="startGame"
             onClick={(e) => {
-              isDone ?
-                resetGame(e) :
-                startGame(e)
+              e.preventDefault()
+              if (isDone)
+                setGlobalRoute('/waiting_room')
             }}
             style={{
               display: (!isDone && isStart) ? 'none' : 'block',
-              marginTop: (!isDone && isStart) ? 'auto' : '32%'
+              marginTop: (!isDone && isStart) ? 'auto' : '30%'
             }}
           >
             <div>
               <img width="270" height="110" src={window.origin + "/img/fight.png"} />
-              <p>{isDone ? "Back to room" : "Play"}</p>
+              <p className='h5'>{isDone ? "Back to room" : "Wait for enemy"}</p>
             </div>
           </div>
           <canvas width={1024} height={576} ref={canvasRef}></canvas>
         </div>
       </div>
+      <div ref={countDownRef} className="timeStart" />
     </>
   )
 }

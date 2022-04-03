@@ -31,8 +31,8 @@ function RoomPage({ client, currentRoom, setCurrentRoom, playerDetail, setPlayer
     }
   }, [client])
 
-  function handleRoomStart(roomIndex) {
-    setCurrentRoom((prev) => ({ ...prev, roomIndex }))
+  function handleRoomStart(res) {
+    setCurrentRoom((prev) => ({ ...prev, roomIndex: res.roomIndex }))
     setGlobalRoute('/fight')
   }
 
