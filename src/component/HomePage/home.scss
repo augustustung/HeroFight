@@ -26,7 +26,15 @@
       margin-top: 15px;
       font-size: 17px;
       font-weight: 700;
+      margin-left: -15px;
       font-family:'Courier New', Courier, monospace;
+    }
+
+    .detail-hero {
+      .text {
+        top: 0;
+        transform: translateY(50%);
+      }
     }
 
     .detail {
@@ -44,7 +52,7 @@
     margin-right: auto;
 
     .body {
-      height: 90%;
+      height: 80%;
       ul {
         padding-left: 12px;
         padding-right: 12px;

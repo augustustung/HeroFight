@@ -26,9 +26,39 @@ const routes = {
 function App() {
   const [client, setClient] = useState()
   const [globalRoute, setGlobalRoute] = useState('/')
-  const [currentRoom, setCurrentRoom] = useState({})
+  const [currentRoom, setCurrentRoom] = useState({
+    roomId: "12312",
+    roomName: "asdasd",
+    deposit: 123123,
+    players: [{
+      playerId: 'sadasd',
+      username: 'tung',
+      walletAddress: '0x123123123123',
+      balance: 123123123,
+      champion: "samuraiMack",
+      status: false,
+      isHost: true
+    }, {
+      playerId: 'sadasd',
+      username: 'tung',
+      walletAddress: '0x123123123123',
+      balance: 123123123,
+      champion: "wizard",
+      status: true,
+      isHost: false
+    }]
+  })
   // const blockchain = useSelector(state => state.blockchain)
   const user = useSelector(state => state.user)
+  const [playerDetail, setPlayerDetail] = useState({
+    playerId: 'sadasd',
+    username: 'tung',
+    walletAddress: '0x123123123123',
+    balance: 123123123,
+    champion: "hero",
+    status: false,
+    isHost: false
+  })
 
   // eslint-disable-next-line
   let DisplayComponent = Object.values(routes).find((value) => {
@@ -47,10 +77,12 @@ function App() {
     //  }
 
     const options = {
-      reconnectionDelayMax: 10000,
+      reconnectionDelayMax: 5000,
       auth: {
         token: process.env.REACT_APP_SECRET_TOKEN
       },
+      autoConnect: true,
+      timeout: 1000
     };
 
     ioConnect(url, options);
@@ -58,15 +90,36 @@ function App() {
 
   const handleDisconnect = () => {
     if (client) {
+      client.emit('player_leave_room', {
+        roomId: 'asdasd',
+        isHost: false,
+      }, (res) => {
+        console.log(res);
+        setClient(null)
+      })
       client.off()
-      client.disconnect()
+      setTimeout(() => {
+        client.disconnect()
+      }, 1000);
     }
   };
 
+  useEffect(() => {
+    window.onbeforeunload = function (e) {
+      e = e || window.event;
+      // For IE and Firefox prior to version 4
+      if (e) {
+        e.returnValue = 'Sure?';
+      }
+
+      // For Safari
+      return 'Sure?';
+    };
+  }, [])
 
 
   useEffect(() => {
-    if (!client) return;
+    if (!client) return
 
     client.on('connect', () => {
       console.log('connect successfully')
@@ -78,6 +131,7 @@ function App() {
       console.log('Reconnecting')
     });
     client.on("disconnect", (reason) => {
+      console.log('reason', reason);
       if (reason === "io server disconnect") {
         // the disconnection was initiated by the server, you need to reconnect manually
         client.connect();
@@ -94,19 +148,14 @@ function App() {
 
   return (
     <main className="main_container">
-      {/* <button hidden id="home" onClick={() => {
-        setGlobalRoute("/")
-      }} />
-      <button id="fight" onClick={() => {
-        setGlobalRoute("/fight")
-      }}>clickckckck</button>
-      <button id='waittingRoom' onClick={() => {
-        setGlobalRoute("/waiting_room")
+      {/* <button id='waittingRoom' onClick={() => {
+        handleDisconnect()
       }}>clickkkkkkkkkkkk</button> */}
       <DisplayComponent.component
         user={user} setGlobalRoute={setGlobalRoute}
         client={client} setCurrentRoom={setCurrentRoom}
         currentRoom={currentRoom}
+        playerDetail={playerDetail} setPlayerDetail={setPlayerDetail}
       />
     </main>
   );
