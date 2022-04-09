@@ -56,6 +56,14 @@ class Fighter extends Sprite {
     this.damage = damage
     this.defense = defense
     this.hp = hp
+    this.keys = {
+      ArrowRight: {
+        pressed: false
+      },
+      ArrowLeft: {
+        pressed: false
+      }
+    }
 
     for (const sprite in this.sprites) {
       sprites[sprite].image = new Image()
@@ -182,6 +190,22 @@ class Fighter extends Sprite {
         }
         break
     }
+  }
+
+  updateFigures(newData) {
+    this.velocity = newData.velocity
+    this.lastKey = newData.lastKey;
+    this.isJumping = newData.isJumping;
+    this.attackBox = newData.attackBox;
+    this.isAttacking = newData.isAttacking;
+    this.health = newData.health
+    this.framesCurrent = newData.framesCurrent
+    this.framesElapsed = newData.framesElapsed
+    this.framesHold = newData.framesHold
+    this.sprites = newData.sprites
+    this.dead = newData.dead
+    this.lastTimeAttack = newData.lastTimeAttack
+    this.keys = newData.keys
   }
 }
 

@@ -68,14 +68,16 @@ function HomePage({ user, client, setGlobalRoute, setCurrentRoom, setPlayerDetai
     })
 
     client.on('room_delete', (roomData) => {
-      setRoomList(prev => {
-        let index = prev.findIndex(item => roomData.roomId === item.roomId);
-        let newData = prev
-        if (index >= 0) {
-          newData.splice(index, 1);
-        }
-        return newData
-      })
+      if (roomData) {
+        setRoomList(prev => {
+          let index = prev.findIndex(item => roomData.roomId === item.roomId);
+          let newData = prev
+          if (index >= 0) {
+            newData.splice(index, 1);
+          }
+          return newData
+        })
+      }
     })
 
     return () => {
@@ -279,7 +281,7 @@ function HomePage({ user, client, setGlobalRoute, setCurrentRoom, setPlayerDetai
             <Form onSubmit={onCreateRoom}>
               <Form.Group className="mb-3" controlId="roomName">
                 <Form.Label>Room's name</Form.Label>
-                <Form.Control required type="text" placeholder="Enter name" />
+                <Form.Control required type="text" placeholder="Enter name" autoFocus />
               </Form.Group>
               <Form.Group className="mb-3" controlId="deposit">
                 <Form.Label>Deposit</Form.Label>

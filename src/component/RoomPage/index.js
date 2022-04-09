@@ -11,10 +11,12 @@ function RoomPage({ client, currentRoom, setCurrentRoom, playerDetail, setPlayer
     })
 
     client.on('host_leave_room', () => {
+      if (!playerDetail.isHost) {
+        alert("Host left room")
+      }
       setCurrentRoom(null)
       setPlayerDetail(null)
       setGlobalRoute("/")
-      alert("Host left room")
     })
 
     client.on("room_has_update", (data) => {
@@ -34,6 +36,21 @@ function RoomPage({ client, currentRoom, setCurrentRoom, playerDetail, setPlayer
   function handleRoomStart(res) {
     setCurrentRoom((prev) => ({ ...prev, roomIndex: res.roomIndex }))
     setGlobalRoute('/fight')
+    setCurrentRoom(prev => ({
+      ...prev,
+      ...res.roomData,
+      players: [
+        ...prev.players,
+        {
+          ...prev.players[0],
+          status: false
+        }
+      ]
+    }))
+    setPlayerDetail(prev => ({
+      ...prev,
+      status: false
+    }))
   }
 
   function renderText() {

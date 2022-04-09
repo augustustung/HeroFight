@@ -53,7 +53,7 @@
     "width": 80,
     "height": 50
   },
-  "minX": 15,
+  "minX": 6,
   "maxX": 945,
   "attackSpeed": "700",
   "damage": "50",
