@@ -23,7 +23,6 @@ const shop = new Sprite({
 })
 
 let timerId
-let count = 4
 let player
 let enemy
 let requestAnimationFrameId
@@ -38,23 +37,13 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
 
   function handleCountdown() {
     if (countDownRef.current) {
-      setTimeout(() => {
-        if (count > 0) {
-          timerId = setTimeout(handleCountdown, 500)
-          count--
-          countDownRef.current.innerHTML = count
-        }
-        if (count === 0) {
-          clearTimeout(timerId)
-          countDownRef.current.innerHTML = 'FIGHT!'
-          setTimeout(() => {
-            countDownRef.current.innerHTML = ''
-            setIsStart(true)
-          }, 500)
-          window.addEventListener('keyup', (e) => onKeyUp(e, true))
-          window.addEventListener('keydown', (e) => onKeyDown(e, true))
-        }
-      }, 500);
+        countDownRef.current.innerHTML = 'FIGHT!'
+        setTimeout(() => {
+          countDownRef.current.innerHTML = ''
+          setIsStart(true)
+        }, 500)
+        window.addEventListener('keyup', (e) => onKeyUp(e, true))
+        window.addEventListener('keydown', (e) => onKeyDown(e, true))
     }
   }
 
@@ -68,25 +57,7 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
 
       champ = await require(`../../oop/champ/${currentRoom.players[1].champion}Enemy.json`)
       enemy = new Fighter(champ)
-
-      client.emit('fight!', {
-        roomIndex: currentRoom.roomIndex,
-        player: player,
-        enemy: enemy,
-        isHost: playerDetail.isHost
-      })
     }
-  }
-
-  const handleGameOver = ({
-    winnerName
-  }) => {
-    setIsDone(true)
-    timerRef.current.innerHTML = 0
-    window.removeEventListener('keyup', (e) => onKeyUp(e, false))
-    window.removeEventListener('keydown', (e) => onKeyDown(e, false))
-    document.querySelector('#displayText').style.display = 'flex'
-    document.querySelector('#displayText').innerHTML = winnerName
   }
 
   async function setStateFighter({ key, type, who }) {
@@ -108,29 +79,24 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
   }
 
   useEffect(() => {
+    let mounted = true
+    if (client && mounted) {
+      client.emit('player_load_completely', {
+          roomIndex: currentRoom.roomIndex
+      })  
+    }
+    return () => {
+      mounted = false
+    }
+  },[client])
+
+  useEffect(() => {
     if (!client) return
     client.on('start_game', handleStartGame)
 
-    if (isFirstTime) {
-      client.emit('player_load_completely', {
-        roomIndex: currentRoom.roomIndex
-      }, (res) => {
-        if (res) {
-          if (res.errCode === 0) {
-            handleStartGame()
-          } else {
-            console.log(res.errMessage)
-          }
-        } else {
-          console.log('error when play', res.errMessage)
-        }
-      })
-      setIsFirstTime(false)
-    }
-
     client.on('receive_action', setStateFighter)
 
-    client.on('game_over', handleGameOver)
+    client.on('game_over', determineWinner)
 
     client.on('battle_update', (res) => {
       timerRef.current.innerHTML = res
@@ -149,7 +115,6 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
     if (canvasRef && canvasRef.current) {
       animate()
     }
-
     return () => {
       window.cancelAnimationFrame(requestAnimationFrameId)
     }
@@ -222,16 +187,26 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
   }
 
   function determineWinner() {
-    if (player.health === enemy.health) {
+    timerRef.current.innerHTML = 0
+    document.getElementById('displayText').style.display = "flex"
+    if (
+      player.health === player.hp &&
+      enemy.health === enemy.hp  
+    ) {
       document.getElementById('displayText').innerHTML = "Tie"
     } else if (player.health > enemy.health) {
-      document.getElementById('displayText').innerHTML = player.playerName + ' win!'
+      document.getElementById('displayText').innerHTML = currentRoom.players[0].playerName + ' win!'
     } else if (player.health < enemy.health) {
-      document.getElementById('displayText').innerHTML = enemy.playerName + ' win!';
+      document.getElementById('displayText').innerHTML = currentRoom.players[1].playerName + ' win!';
     }
+    window.removeEventListener('keyup', (e) => onKeyUp(e, false))
+    window.removeEventListener('keydown', (e) => onKeyDown(e, false))
     player.velocity.x = 0;
     enemy.velocity.x = 0;
     setIsDone(true)
+    setTimeout(() => {
+      window.cancelAnimationFrame(requestAnimationFrameId)
+    }, 1000)
   }
 
   async function checkPlayerAction() {
@@ -275,6 +250,8 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
     if (player && enemy) {
       player.update(c, canvas)
       enemy.update(c, canvas)
+      player.velocity.x = 0
+      enemy.velocity.x = 0
       checkPlayerAction()
     }
   }
@@ -296,11 +273,6 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
         case 'ArrowLeft':
           player.keys.ArrowLeft.pressed = false
           break
-        case "ArrowUp":
-          player.velocity.y = -15
-          break
-        case " ":
-          player.attack()
       }
     } else {
       switch (key) {
@@ -310,11 +282,6 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
         case 'ArrowLeft':
           enemy.keys.ArrowLeft.pressed = false
           break
-        case "ArrowUp":
-          enemy.velocity.y = -15
-          break
-        case " ":
-          enemy.attack()
       }
     }
   }
@@ -327,44 +294,48 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
     })
   }
 
+  function handleCheckOnkeyDown(key, player) {
+    let isEmit
+    switch (key) {
+      case 'ArrowRight':
+        if (!player.keys.ArrowRight.pressed) {
+          player.keys.ArrowRight.pressed = true
+          player.lastKey = 'ArrowRight'
+        } else {
+          isEmit = false
+        }
+        break
+      case 'ArrowLeft':
+        if (!player.keys.ArrowLeft.pressed) {
+          player.keys.ArrowLeft.pressed = true
+          player.lastKey = 'ArrowLeft'
+        } else {
+          isEmit = false
+        }
+        break
+      case " ":
+        player.attack()
+        break
+      case "ArrowUp":
+        if (!player.isJumping) {
+          player.isJumping = true
+          setTimeout(() => {
+            player.isJumping = false
+          }, 800)
+          player.velocity.y = -15
+        }
+        break
+    }
+    player.lastKey = key
+    return isEmit
+  }
+
   function checkOnKeyDown(key, isHost) {
     let isEmit = true
     if (isHost) {
-      switch (key) {
-        case 'ArrowRight':
-          if (!player.keys.ArrowRight.pressed) {
-            player.keys.ArrowRight.pressed = true
-          } else {
-            isEmit = false
-          }
-          break
-        case 'ArrowLeft':
-          if (!player.keys.ArrowLeft.pressed) {
-            player.keys.ArrowLeft.pressed = true
-          } else {
-            isEmit = false
-          }
-          break
-      }
-      player.lastKey = key
+      isEmit = handleCheckOnkeyDown(key, player)
     } else {
-      switch (key) {
-        case 'ArrowRight':
-          if (!enemy.keys.ArrowRight.pressed) {
-            enemy.keys.ArrowRight.pressed = true
-          } else {
-            isEmit = false
-          }
-          break
-        case 'ArrowLeft':
-          if (!enemy.keys.ArrowLeft.pressed) {
-            enemy.keys.ArrowLeft.pressed = true
-          } else {
-            isEmit = false
-          }
-          break
-      }
-      enemy.lastKey = key
+      isEmit = handleCheckOnkeyDown(key, enemy)
     }
     return isEmit
   }
