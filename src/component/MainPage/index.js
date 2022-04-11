@@ -3,6 +3,9 @@ import "./main_page.scss"
 import Sprite from '../../oop/Sprite';
 import Fighter from '../../oop/Fighter';
 import gsap from 'gsap';
+import { io } from 'socket.io-client';
+import { useHistory } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 const background = new Sprite({
   position: {
@@ -26,14 +29,55 @@ let timerId
 let player
 let enemy
 let requestAnimationFrameId
+function MainPage() {
 
-function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
   const canvasRef = useRef()
   const timerRef = useRef()
   const countDownRef = useRef()
   const [isStart, setIsStart] = useState(false)
   const [isDone, setIsDone] = useState(false)
   const [isFirstTime, setIsFirstTime] = useState(true)
+  const app = useSelector(state => state.app)
+  const [client, setClient] = useState()
+  const { currentRoom, playerDetail } = app
+  const history = useHistory()
+
+  function ioConnect(url, option) {
+    setClient(io(url, option))
+  }
+
+  const handleConnect = () => {
+    let url = process.env.REACT_APP_API_URL
+
+    //   if (window.location.protocol !== "https:") {
+    //      url = process.env.REACT_APP_API_WS_URL
+    //  }
+
+    const options = {
+      reconnectionDelayMax: 5000,
+      auth: {
+        token: process.env.REACT_APP_SECRET_TOKEN
+      },
+      autoConnect: true,
+      timeout: 1000
+    };
+
+    ioConnect(url, options);
+  };
+
+  const handleDisconnect = () => {
+    if (client) {
+      client.off()
+      client.disconnect()
+    }
+  };
+
+  useEffect(() => {
+    handleConnect()
+    return () => {
+      handleDisconnect()
+    }
+  }, [])
 
   function handleCountdown() {
     if (countDownRef.current) {
@@ -79,16 +123,13 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
   }
 
   useEffect(() => {
-    let mounted = true
-    if (client && mounted) {
+    if (client && isFirstTime) {
       client.emit('player_load_completely', {
-          roomIndex: currentRoom.roomIndex
-      })  
+          roomId: currentRoom.roomId
+      }) 
+      setIsFirstTime(false)
     }
-    return () => {
-      mounted = false
-    }
-  },[client])
+  },[client, isFirstTime, setIsFirstTime])
 
   useEffect(() => {
     if (!client) return
@@ -109,7 +150,7 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
       player = null
       enemy = null
     }
-  }, [client, isFirstTime, setIsFirstTime])
+  }, [client])
 
   useEffect(() => {
     if (canvasRef && canvasRef.current) {
@@ -204,9 +245,7 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
     player.velocity.x = 0;
     enemy.velocity.x = 0;
     setIsDone(true)
-    setTimeout(() => {
-      window.cancelAnimationFrame(requestAnimationFrameId)
-    }, 1000)
+    window.cancelAnimationFrame(requestAnimationFrameId)
   }
 
   async function checkPlayerAction() {
@@ -229,9 +268,11 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
 
     // end game based on health
     if (player.health <= 0 || enemy.health <= 0) {
-      client.emit('game_over', {
-        roomIndex: currentRoom.roomIndex
-      })
+      if (client) {
+        client.emit('game_over', {
+          roomId: currentRoom.roomId
+        })
+      }
       determineWinner()
     }
   }
@@ -259,7 +300,7 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
   function handleEmitAction(payload) {
     client.emit('player_do_action', {
       ...payload,
-      roomIndex: currentRoom.roomIndex,
+      roomId: currentRoom.roomId,
       who: playerDetail.isHost ? 'fighter1' : 'fighter2'
     })
   }
@@ -295,23 +336,23 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
   }
 
   function handleCheckOnkeyDown(key, player) {
-    let isEmit
+    let isEmit = true
     switch (key) {
       case 'ArrowRight':
         if (!player.keys.ArrowRight.pressed) {
           player.keys.ArrowRight.pressed = true
-          player.lastKey = 'ArrowRight'
         } else {
           isEmit = false
         }
+        player.lastKey = key
         break
       case 'ArrowLeft':
         if (!player.keys.ArrowLeft.pressed) {
           player.keys.ArrowLeft.pressed = true
-          player.lastKey = 'ArrowLeft'
         } else {
           isEmit = false
         }
+        player.lastKey = key
         break
       case " ":
         player.attack()
@@ -326,7 +367,6 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
         }
         break
     }
-    player.lastKey = key
     return isEmit
   }
 
@@ -376,7 +416,7 @@ function MainPage({ client, currentRoom, setGlobalRoute, playerDetail }) {
             onClick={(e) => {
               e.preventDefault()
               if (isDone) {
-                setGlobalRoute('/waiting_room')
+                history.replace('/waiting-room')
               }
             }}
             style={{

@@ -1,26 +1,82 @@
 import { Button } from 'react-bootstrap';
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import './room.scss'
+import { useDispatch, useSelector } from 'react-redux';
+import { setData } from '../../redux/app/appActions'
+import { useHistory } from 'react-router-dom';
+import { io } from 'socket.io-client';
 
-function RoomPage({ client, currentRoom, setCurrentRoom, playerDetail, setPlayerDetail, setGlobalRoute }) {
+function RoomPage() {
+  const app = useSelector(state => state.app)
+  const [client, setClient] = useState()
+  const { currentRoom, playerDetail } = app
+  const dispatch = useDispatch()
+  const history = useHistory()
+  const [isFirstTime, setIsFirstTime] = useState(true)
+  
+  function ioConnect(url, option) {
+    setClient(io(url, option))
+  }
+
+  const handleConnect = () => {
+    let url = process.env.REACT_APP_API_URL
+
+    //   if (window.location.protocol !== "https:") {
+    //      url = process.env.REACT_APP_API_WS_URL
+    //  }
+
+    const options = {
+      reconnectionDelayMax: 5000,
+      auth: {
+        token: process.env.REACT_APP_SECRET_TOKEN
+      },
+      autoConnect: true,
+      timeout: 1000
+    };
+
+    ioConnect(url, options);
+  };
+
+  const handleDisconnect = () => {
+    if (client) {
+      client.off()
+      client.disconnect()
+    }
+  };
+
+  useEffect(() => {
+    handleConnect()
+    return () => {
+      handleDisconnect()
+    }
+  }, [])
+
+
   useEffect(() => {
     if (!client) return
+    
+    if (isFirstTime) {
+      client.emit('load_room', { roomId: currentRoom.roomId })
+      setIsFirstTime(false)
+    }
 
     client.on('player_join', (roomData) => {
-      setCurrentRoom(roomData);
+      dispatch(setData({
+        currentRoom: roomData
+      }));
     })
 
     client.on('host_leave_room', () => {
-      if (!playerDetail.isHost) {
+      if (currentRoom.players.length > 1) {
         alert("Host left room")
+        clearData()
       }
-      setCurrentRoom(null)
-      setPlayerDetail(null)
-      setGlobalRoute("/")
     })
 
     client.on("room_has_update", (data) => {
-      setCurrentRoom(data)
+      dispatch(setData({
+        currentRoom: data
+      }))
     })
 
     client.on("room_start", handleRoomStart)
@@ -31,26 +87,21 @@ function RoomPage({ client, currentRoom, setCurrentRoom, playerDetail, setPlayer
       client.off('host_leave_room');
       client.off('room_has_update');
     }
-  }, [client])
+  }, [client, isFirstTime, setIsFirstTime])
 
-  function handleRoomStart(res) {
-    setCurrentRoom((prev) => ({ ...prev, roomIndex: res.roomIndex }))
-    setGlobalRoute('/fight')
-    setCurrentRoom(prev => ({
-      ...prev,
-      ...res.roomData,
-      players: [
-        ...prev.players,
-        {
-          ...prev.players[0],
-          status: false
-        }
-      ]
+  function handleRoomStart() {
+    let newData = currentRoom
+    newData.players[1].status = false
+    dispatch(setData({
+      currentRoom: {
+        ...newData
+      },
+      playerDetail: {
+        ...playerDetail,
+        status: false
+      }
     }))
-    setPlayerDetail(prev => ({
-      ...prev,
-      status: false
-    }))
+    history.push('/fight')
   }
 
   function renderText() {
@@ -68,45 +119,35 @@ function RoomPage({ client, currentRoom, setCurrentRoom, playerDetail, setPlayer
     }
   }
 
+  function clearData() {
+    setTimeout(() => {
+      dispatch(setData({
+        currentRoom: {},
+        playerDetail: {}
+      }))
+      history.replace("/")
+    }, 200)
+  }
+
   function handleLeaveRoom() {
-    client.emit('player_leave_room', { roomId: currentRoom.roomId }, (res) => {
-      if (res) {
-        if (res.errCode === 0) {
-          setCurrentRoom(null)
-          setGlobalRoute("/")
-          setPlayerDetail(null)
-        } else {
-          console.log("error when leave room", res.errMessage)
-        }
-      } else {
-        console.log('Error when leave room', res.errMessage)
-      }
+    client.emit('player_leave_room', { roomId: currentRoom.roomId, isHost: playerDetail.isHost })
+    clearData()
+  }
+
+  function handleChangeStatus(key, value) {
+    client.emit("player_change_status", {
+      roomId: currentRoom.roomId, newStatus: { key: key, value: value },
+      currentPlayerIndex: playerDetail.isHost ? 0 : 1
     })
   }
 
-  function handleChangeStatus() {
-    if (playerDetail.isHost) {
-      if (
-        currentRoom.players &&
-        currentRoom.players.length > 1 &&
-        currentRoom.players[1].status
-      ) {
-        client.emit('host_start_room', { roomId: currentRoom.roomId }, handleRoomStart);
-      }
-    } else {
-      client.emit("player_change_status", {
-        roomId: currentRoom.roomId, newStatus: !playerDetail.status
-      }, (res) => {
-        if (res) {
-          if (res.errCode === 0) {
-            setPlayerDetail(prev => ({ ...prev, status: !prev.status }))
-          } else {
-            console.log('Error when change status', res.errMessage)
-          }
-        } else {
-          console.log('Error when change status', res.errMessage)
-        }
-      })
+  function handleStart() {
+    if (
+      currentRoom.players &&
+      currentRoom.players.length > 1 &&
+      currentRoom.players[1].status
+    ) {
+      client.emit('host_start_room', { roomId: currentRoom.roomId }, handleRoomStart);
     }
   }
 
@@ -141,6 +182,33 @@ function RoomPage({ client, currentRoom, setCurrentRoom, playerDetail, setPlayer
                     }
                   </div>
                   {
+                    playerDetail.isHost && (
+                      <div className='my-3'>
+                        <select 
+                          value={(
+                            currentRoom && currentRoom.players && 
+                            currentRoom.players[0] && 
+                            currentRoom.players[0].champion
+                            ) || 'hero'
+                          }
+                          onChange={(e) => {
+                          e.preventDefault();
+                          let newData = currentRoom 
+                          newData.players[0].champion = e.target.value
+                          dispatch(setData({
+                            currentRoom: newData
+                          }))
+                          handleChangeStatus('champion', e.target.value)
+                        }}>
+                          <option value={"hero"}>Hero</option>
+                          <option value={"samuraiMack"}>Samurai Mack</option>
+                          <option value={'warrior'}>Warrior</option>
+                          <option value={'wizard'}>Wizard</option>
+                        </select>
+                      </div>
+                    )
+                  }
+                  {
                     currentRoom && currentRoom.players &&
                       currentRoom.players[0] && currentRoom.players[0].champion ?
                       <div>
@@ -168,6 +236,33 @@ function RoomPage({ client, currentRoom, setCurrentRoom, playerDetail, setPlayer
                     }
                   </div>
                   {
+                    !playerDetail.isHost && (
+                      <div className='my-3'>
+                        <select 
+                          value={(
+                            currentRoom && currentRoom.players && 
+                            currentRoom.players[1] && 
+                            currentRoom.players[1].champion
+                            ) || 'hero'
+                          }
+                          onChange={(e) => {
+                          e.preventDefault();
+                          let newData = currentRoom 
+                          newData.players[1].champion = e.target.value
+                          dispatch(setData({
+                            currentRoom: newData
+                          }))
+                          handleChangeStatus('champion', e.target.value)
+                        }}>
+                          <option value={"hero"}>Hero</option>
+                          <option value={"samuraiMack"}>Samurai Mack</option>
+                          <option value={'warrior'}>Warrior</option>
+                          <option value={'wizard'}>Wizard</option>
+                        </select>
+                      </div>
+                    )
+                  }
+                  {
                     currentRoom && currentRoom.players &&
                       currentRoom.players[1] && currentRoom.players[1].champion ?
                       <div>
@@ -180,7 +275,19 @@ function RoomPage({ client, currentRoom, setCurrentRoom, playerDetail, setPlayer
               <div className='footer'>
                 <Button className='mr-5' variant="danger" onClick={handleLeaveRoom}>Leave room</Button>
                 <Button
-                  onClick={handleChangeStatus}
+                  onClick={() => {
+                    if (playerDetail.isHost) {
+                      handleStart()
+                    } else {
+                      dispatch(setData({
+                        playerDetail: {
+                          ...playerDetail,
+                          status: !playerDetail.status
+                        }
+                      }))
+                      handleChangeStatus('status', !playerDetail.status)
+                    }
+                  }}
                   variant={
                     (
                       (currentRoom && currentRoom.players && currentRoom.players[1] && currentRoom.players[1].status) ||
