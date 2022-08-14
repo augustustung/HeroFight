@@ -13,17 +13,13 @@ function RoomPage() {
   const dispatch = useDispatch()
   const history = useHistory()
   const [isFirstTime, setIsFirstTime] = useState(true)
-  
+
   function ioConnect(url, option) {
     setClient(io(url, option))
   }
 
   const handleConnect = () => {
     let url = process.env.REACT_APP_API_URL
-
-    //   if (window.location.protocol !== "https:") {
-    //      url = process.env.REACT_APP_API_WS_URL
-    //  }
 
     const options = {
       reconnectionDelayMax: 5000,
@@ -39,22 +35,29 @@ function RoomPage() {
 
   const handleDisconnect = () => {
     if (client) {
-      client.off()
+      client.emit('disconnect')
+      client.close()
       client.disconnect()
     }
   };
 
   useEffect(() => {
+    let isMounted = false;
+    if (isMounted) return;
+
     handleConnect()
     return () => {
+      isMounted = true;
       handleDisconnect()
     }
   }, [])
 
-
   useEffect(() => {
     if (!client) return
-    
+
+    let isMounted = false;
+    if (isMounted) return;
+
     if (isFirstTime) {
       client.emit('load_room', { roomId: currentRoom.roomId })
       setIsFirstTime(false)
@@ -86,11 +89,14 @@ function RoomPage() {
       client.off('room_start');
       client.off('host_leave_room');
       client.off('room_has_update');
+      isMounted = true;
     }
   }, [client, isFirstTime, setIsFirstTime])
 
-  function handleRoomStart() {
-    let newData = currentRoom
+  function handleRoomStart(newRoomData) {
+    if (!newRoomData) return
+
+    let newData = newRoomData
     newData.players[1].status = false
     dispatch(setData({
       currentRoom: {
@@ -184,22 +190,22 @@ function RoomPage() {
                   {
                     playerDetail.isHost && (
                       <div className='my-3'>
-                        <select 
+                        <select
                           value={(
-                            currentRoom && currentRoom.players && 
-                            currentRoom.players[0] && 
+                            currentRoom && currentRoom.players &&
+                            currentRoom.players[0] &&
                             currentRoom.players[0].champion
-                            ) || 'hero'
+                          ) || 'hero'
                           }
                           onChange={(e) => {
-                          e.preventDefault();
-                          let newData = currentRoom 
-                          newData.players[0].champion = e.target.value
-                          dispatch(setData({
-                            currentRoom: newData
-                          }))
-                          handleChangeStatus('champion', e.target.value)
-                        }}>
+                            e.preventDefault();
+                            let newData = currentRoom
+                            newData.players[0].champion = e.target.value
+                            dispatch(setData({
+                              currentRoom: newData
+                            }))
+                            handleChangeStatus('champion', e.target.value)
+                          }}>
                           <option value={"hero"}>Hero</option>
                           <option value={"samuraiMack"}>Samurai Mack</option>
                           <option value={'warrior'}>Warrior</option>
@@ -238,22 +244,22 @@ function RoomPage() {
                   {
                     !playerDetail.isHost && (
                       <div className='my-3'>
-                        <select 
+                        <select
                           value={(
-                            currentRoom && currentRoom.players && 
-                            currentRoom.players[1] && 
+                            currentRoom && currentRoom.players &&
+                            currentRoom.players[1] &&
                             currentRoom.players[1].champion
-                            ) || 'hero'
+                          ) || 'hero'
                           }
                           onChange={(e) => {
-                          e.preventDefault();
-                          let newData = currentRoom 
-                          newData.players[1].champion = e.target.value
-                          dispatch(setData({
-                            currentRoom: newData
-                          }))
-                          handleChangeStatus('champion', e.target.value)
-                        }}>
+                            e.preventDefault();
+                            let newData = currentRoom
+                            newData.players[1].champion = e.target.value
+                            dispatch(setData({
+                              currentRoom: newData
+                            }))
+                            handleChangeStatus('champion', e.target.value)
+                          }}>
                           <option value={"hero"}>Hero</option>
                           <option value={"samuraiMack"}>Samurai Mack</option>
                           <option value={'warrior'}>Warrior</option>

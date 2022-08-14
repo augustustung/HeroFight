@@ -30,7 +30,6 @@ let player
 let enemy
 let requestAnimationFrameId
 function MainPage() {
-
   const canvasRef = useRef()
   const timerRef = useRef()
   const countDownRef = useRef()
@@ -49,10 +48,6 @@ function MainPage() {
   const handleConnect = () => {
     let url = process.env.REACT_APP_API_URL
 
-    //   if (window.location.protocol !== "https:") {
-    //      url = process.env.REACT_APP_API_WS_URL
-    //  }
-
     const options = {
       reconnectionDelayMax: 5000,
       auth: {
@@ -67,34 +62,42 @@ function MainPage() {
 
   const handleDisconnect = () => {
     if (client) {
-      client.off()
+      client.emit('disconnect')
+      client.close()
       client.disconnect()
     }
   };
 
   useEffect(() => {
+    let isMounted = false;
+    if (isMounted) return;
+
     handleConnect()
     return () => {
+      isMounted = true;
       handleDisconnect()
     }
   }, [])
 
   function handleCountdown() {
-    if (countDownRef.current) {
-        countDownRef.current.innerHTML = 'FIGHT!'
-        setTimeout(() => {
-          countDownRef.current.innerHTML = ''
-          setIsStart(true)
-        }, 500)
-        window.addEventListener('keyup', (e) => onKeyUp(e, true))
-        window.addEventListener('keydown', (e) => onKeyDown(e, true))
-    }
+    setTimeout(() => {
+      countDownRef.current.innerHTML = ''
+      setIsStart(true)
+    }, 500)
+    window.addEventListener('keyup', (e) => {
+      if (isDone) return;
+      onKeyUp(e)
+    })
+    window.addEventListener('keydown', (e) => {
+      if (isDone) return;
+      onKeyDown(e)
+    })
   }
 
   async function handleStartGame() {
     if (!isStart && !isDone) {
       setIsStart(true)
-      timerId = setTimeout(handleCountdown, 500)
+      handleCountdown()
       // get detail champ
       let champ = await require(`../../oop/champ/${currentRoom.players[0].champion}.json`)
       player = new Fighter(champ)
@@ -123,21 +126,33 @@ function MainPage() {
   }
 
   useEffect(() => {
+    let isMounted = false;
+    if (isMounted) return;
+
     if (client && isFirstTime) {
       client.emit('player_load_completely', {
-          roomId: currentRoom.roomId
-      }) 
+        roomId: currentRoom.roomId
+      })
       setIsFirstTime(false)
     }
-  },[client, isFirstTime, setIsFirstTime])
+    return () => {
+      isMounted = true;
+    }
+  }, [client, isFirstTime, setIsFirstTime])
 
   useEffect(() => {
     if (!client) return
+    let isMounted = false;
+    if (isMounted) return;
+
     client.on('start_game', handleStartGame)
 
     client.on('receive_action', setStateFighter)
 
-    client.on('game_over', determineWinner)
+    client.on('game_over', () => {
+      determineWinner()
+      handleGameOver()
+    })
 
     client.on('battle_update', (res) => {
       timerRef.current.innerHTML = res
@@ -147,8 +162,7 @@ function MainPage() {
       client.off('receive_action')
       client.off('game_over')
       client.off('battle_update')
-      player = null
-      enemy = null
+      isMounted = true;
     }
   }, [client])
 
@@ -232,7 +246,7 @@ function MainPage() {
     document.getElementById('displayText').style.display = "flex"
     if (
       player.health === player.hp &&
-      enemy.health === enemy.hp  
+      enemy.health === enemy.hp
     ) {
       document.getElementById('displayText').innerHTML = "Tie"
     } else if (player.health > enemy.health) {
@@ -240,12 +254,6 @@ function MainPage() {
     } else if (player.health < enemy.health) {
       document.getElementById('displayText').innerHTML = currentRoom.players[1].playerName + ' win!';
     }
-    window.removeEventListener('keyup', (e) => onKeyUp(e, false))
-    window.removeEventListener('keydown', (e) => onKeyDown(e, false))
-    player.velocity.x = 0;
-    enemy.velocity.x = 0;
-    setIsDone(true)
-    window.cancelAnimationFrame(requestAnimationFrameId)
   }
 
   async function checkPlayerAction() {
@@ -274,6 +282,7 @@ function MainPage() {
         })
       }
       determineWinner()
+      handleGameOver()
     }
   }
 
@@ -388,6 +397,20 @@ function MainPage() {
         type: "DOWN"
       })
     }
+  }
+
+  function handleGameOver() {
+    if (client) {
+      client.off('battle_update')
+      client.emit('battle_off', {
+        roomId: currentRoom.roomId
+      })
+    }
+    window.removeEventListener('keyup', null)
+    window.removeEventListener('keydown', null)
+    player.velocity.x = 0;
+    enemy.velocity.x = 0;
+    setIsDone(true)
   }
 
   return (

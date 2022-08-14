@@ -19,10 +19,6 @@ function FindRoom(props) {
   const handleConnect = () => {
     let url = process.env.REACT_APP_API_URL
 
-    //   if (window.location.protocol !== "https:") {
-    //      url = process.env.REACT_APP_API_WS_URL
-    //  }
-
     const options = {
       reconnectionDelayMax: 5000,
       auth: {
@@ -41,18 +37,20 @@ function FindRoom(props) {
         roomId: 'asdasd',
         isHost: false,
       }, (res) => {
-        console.log(res);
         setClient(null)
       })
-      client.off()
-      setTimeout(() => {
-        client.disconnect()
-      }, 1000);
+      client.emit('disconnect')
+      client.close()
+      client.disconnect()
     }
   };
 
   useEffect(() => {
-    if (!client) return
+    if (!client) return;
+
+    let isMounted = false;
+    if (isMounted) return;
+
 
     client.on('connect', () => {
       console.log('connect successfully')
@@ -70,12 +68,19 @@ function FindRoom(props) {
         client.connect();
       }
     });
+    return () => {
+      isMounted = false;
+    }
   }, [client]);
 
   useEffect(() => {
+    let isMounted = false;
+    if (isMounted) return;
+
     handleConnect()
     return () => {
       handleDisconnect()
+      isMounted = true;
     }
   }, [])
 
@@ -191,51 +196,51 @@ function FindRoom(props) {
 
   return (
     <>
-    <div className='room_list_area'>
-      <div className='body'>
-        <ul>
-          {
-            roomList && roomList.length > 0 && roomList.map((item, index) => {
-              if (!item) return <></>
+      <div className='room_list_area'>
+        <div className='body'>
+          <ul>
+            {
+              roomList && roomList.length > 0 && roomList.map((item, index) => {
+                if (!item) return <></>
 
-              return (
-                <li
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (e.detail === 2) {
-                      joinRoom(item)
-                    }
-                  }}
-                  key={index}
-                >
-                  <div>ID: {renderRoomId(item.roomId)}</div>
-                  <div>{item.roomName || ""}</div>
-                  <div>
-                    <img src={window.origin + '/img/coin.png'} width="30" height="30" className="d-inline-block align-top" alt="" />
-                    <span>{item.deposit || ""}</span>
-                  </div>
-                  <div>{item.players ? item.players.length : ""}/2&nbsp;</div>
-                  <div>{item.isStart ? "Playing" : "Waiting"}</div>
-                </li>
-              )
-            })
-          }
-        </ul>
+                return (
+                  <li
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (e.detail === 2) {
+                        joinRoom(item)
+                      }
+                    }}
+                    key={index}
+                  >
+                    <div>ID: {renderRoomId(item.roomId)}</div>
+                    <div>{item.roomName || ""}</div>
+                    <div>
+                      <img src={window.origin + '/img/coin.png'} width="30" height="30" className="d-inline-block align-top" alt="" />
+                      <span>{item.deposit || ""}</span>
+                    </div>
+                    <div>{item.players ? item.players.length : ""}/2&nbsp;</div>
+                    <div>{item.isStart ? "Playing" : "Waiting"}</div>
+                  </li>
+                )
+              })
+            }
+          </ul>
+        </div>
+        <div className='w-100 text-center m-3 gap'>
+          <Button variant="light" className='mr-3'>&#8592;</Button>
+          <Button variant="light">&#8594;</Button>
+        </div>
+        <div className='footer'>
+          <Button className='mr-5' variant="light" onClick={() => {
+            getListRoom()
+          }}>Refresh data</Button>
+          <Button onClick={() => {
+            setShow(true)
+          }}>Create room</Button>
+        </div>
       </div>
-      <div className='w-100 text-center m-3 gap'>
-        <Button variant="light" className='mr-3'>&#8592;</Button>
-        <Button variant="light">&#8594;</Button>
-      </div>
-      <div className='footer'>
-        <Button className='mr-5' variant="light" onClick={() => {
-          getListRoom()
-        }}>Refresh data</Button>
-        <Button onClick={() => {
-          setShow(true)
-        }}>Create room</Button>
-      </div>
-    </div>
-       <Modal show={show} onHide={() => setShow(false)}>
+      <Modal show={show} onHide={() => setShow(false)}>
         <Modal.Dialog>
           <Modal.Header>
             <Modal.Title>CREATE ROOM</Modal.Title>
