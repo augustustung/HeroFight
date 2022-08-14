@@ -57,6 +57,12 @@ class Fighter extends Sprite {
     this.defense = defense
     this.hp = hp
     this.keys = {
+      a: {
+        pressed: false
+      },
+      d: {
+        pressed: false
+      },
       ArrowRight: {
         pressed: false
       },
@@ -79,13 +85,13 @@ class Fighter extends Sprite {
     this.attackBox.position.x = this.position.x + this.attackBox.offset.x
     this.attackBox.position.y = this.position.y + this.attackBox.offset.y
 
-    // draw the attack box
-    c.fillRect(
-      this.attackBox.position.x,
-      this.attackBox.position.y,
-      this.attackBox.width,
-      this.attackBox.height
-    )
+    // // draw the attack box
+    // c.fillRect(
+    //   this.attackBox.position.x,
+    //   this.attackBox.position.y,
+    //   this.attackBox.width,
+    //   this.attackBox.height
+    // )
 
     this.position.x += this.velocity.x
     this.position.y += this.velocity.y
