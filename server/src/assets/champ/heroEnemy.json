@@ -1,0 +1,62 @@
+{
+  "position": {
+    "x": 666.5,
+    "y": 100
+  },
+  "velocity": {
+    "x": 0,
+    "y": 0
+  },
+  "imageSrc": "/img/heroEnemy/Idle.png",
+  "framesMax": 11,
+  "scale": 2.5,
+  "color": "blue",
+  "offset": {
+    "x": 140,
+    "y": 55
+  },
+  "sprites": {
+    "idle": {
+      "imageSrc": "/img/heroEnemy/Idle.png",
+      "framesMax": 11
+    },
+    "run": {
+      "imageSrc": "/img/heroEnemy/Run.png",
+      "framesMax": 8
+    },
+    "jump": {
+      "imageSrc": "/img/heroEnemy/Jump.png",
+      "framesMax": 4
+    },
+    "fall": {
+      "imageSrc": "/img/heroEnemy/Fall.png",
+      "framesMax": 4
+    },
+    "attack1": {
+      "imageSrc": "/img/heroEnemy/Attack.png",
+      "framesMax": 6
+    },
+    "takeHit": {
+      "imageSrc": "/img/heroEnemy/Take Hit.png",
+      "framesMax": 4
+    },
+    "death": {
+      "imageSrc": "/img/heroEnemy/Death.png",
+      "framesMax": 9
+    }
+  },
+  "attackBox": {
+    "offset": {
+      "x": -95,
+      "y": 80
+    },
+    "width": 80,
+    "height": 50
+  },
+  "minX": 15,
+  "maxX": 945,
+  "attackSpeed": "700",
+  "damage": "50",
+  "defense": "39",
+  "hp": "700.53"
+}

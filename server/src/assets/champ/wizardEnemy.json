@@ -1,0 +1,62 @@
+{
+  "position": {
+    "x": 656.5,
+    "y": 0
+  },
+  "velocity": {
+    "x": 0,
+    "y": 0
+  },
+  "imageSrc": "/img/wizardEnemy/Idle.png",
+  "framesMax": 6,
+  "scale": 1.5,
+  "color": "blue",
+  "offset": {
+    "x": 115,
+    "y": 60
+  },
+  "sprites": {
+    "idle": {
+      "imageSrc": "/img/wizardEnemy/Idle.png",
+      "framesMax": 6
+    },
+    "run": {
+      "imageSrc": "/img/wizardEnemy/Run.png",
+      "framesMax": 8
+    },
+    "jump": {
+      "imageSrc": "/img/wizardEnemy/Jump.png",
+      "framesMax": 2
+    },
+    "fall": {
+      "imageSrc": "/img/wizardEnemy/Fall.png",
+      "framesMax": 2
+    },
+    "attack1": {
+      "imageSrc": "/img/wizardEnemy/Attack1.png",
+      "framesMax": 8
+    },
+    "takeHit": {
+      "imageSrc": "/img/wizardEnemy/Take Hit.png",
+      "framesMax": 4
+    },
+    "death": {
+      "imageSrc": "/img/wizardEnemy/Death.png",
+      "framesMax": 7
+    }
+  },
+  "attackBox": {
+    "offset": {
+      "x": -75,
+      "y": 65
+    },
+    "width": 90,
+    "height": 50
+  },
+  "minX": 5,
+  "maxX": 925,
+  "attackSpeed": "800",
+  "damage": "50.576",
+  "defense": "51",
+  "hp": "663"
+}
