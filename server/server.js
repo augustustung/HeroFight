@@ -38,7 +38,6 @@ const TIME_LIMIT = 60
 
 
 io.on('connect', connected);
-// setInterval(serverLoop, 1000 / 60);
 
 function connected(socket) {
   console.log('has connection', socket.id);
@@ -133,8 +132,9 @@ function connected(socket) {
     })
     if (roomId) {
       if (playerLeave.isHost) {
+        clearTimeout(roomList[roomId].timerId);
+        io.emit("host_leave_room");
         delete roomList[roomId];
-        clearTimeout(roomList[roomId].timerId)
       } else {
         handleRoomStatus(roomId, playerLeave.isHost);
       }
@@ -142,22 +142,31 @@ function connected(socket) {
     console.log("User has left!", socket.id);
   }
 
-  async function playerLoadCompleted({ roomId }) {
-    await io.sockets.adapter.rooms[roomId]
-    await socket.join(roomId)
+  async function playerLoadCompleted({ roomId, playerIndex }) {
+    await socket.join(roomId);
     if (roomList[roomId].isStart) {
-      roomList[roomId].playerLoadCompleted++;
-      if (roomList[roomId].playerLoadCompleted === 2) {
+      roomList[roomId].players[playerIndex].isReady = true;
+      if (
+        roomList[roomId].players[0].isReady && 
+        roomList[roomId].players[1].isReady
+      ) {
         io.emit("start_game");
         roomList[roomId].countdownTime = TIME_LIMIT
-        if (!roomList[roomId].timerId) {
-          setTimeout(() => {
-            decreaseTimer({
-              roomId: roomId
-            });
-          }, 3000);
-        }
+        setTimeout(() => {
+          decreaseTimer({
+            roomId: roomId
+          });
+        }, 3000);
       }
+      socket.on('player_do_action', playerDoAction);
+
+      socket.on('battle_off', async ({ roomId }) => {
+        clearTimeout(roomList[roomId].timerId);
+        roomList[roomId].timerId = null;
+        roomList[roomId].players[0].isReady = false;
+        roomList[roomId].players[1].isReady = false;
+        await socket.leave(roomId)
+      })
     } else {
       console.log('room is not start', roomId)
     }
@@ -175,11 +184,14 @@ function connected(socket) {
       roomList[roomId].fighter1 = null;
       roomList[roomId].fighter2 = null;
       roomList[roomId].players[1].status = false;
-      roomList[roomId].players[1].isStart = false;
+      roomList[roomId].isStart = false;
       io.emit('game_over', {
         players: roomList[roomId].players
       });
       clearTimeout(roomList[roomId].timerId);
+      roomList[roomId].timerId = null;
+      roomList[roomId].players[0].isReady = false; 
+      roomList[roomId].players[1].isReady = false;
     } else {
       io.emit('battle_update', roomList[roomId].countdownTime);
     }
@@ -213,27 +225,10 @@ function connected(socket) {
   // handle in game
   socket.on('player_load_completely', playerLoadCompleted);
 
-  socket.on('player_do_action', playerDoAction);
-
-  socket.on('battle_off', ({ roomId }) => {
-    clearTimeout(roomList[roomId].timerId);
-  })
   // end of handle in game
 
   socket.on('disconnect', handleDisconnect);
 }
-
-// function serverLoop() {
-//   let roomKeys = Object.keys(roomList);
-//   for (let i = 0; i <= roomKeys.length; i++) {
-//     let currentRoom = roomList[roomKeys[i]];
-//     if (currentRoom && currentRoom.isStart === true) {
-//       gameLogic(roomKeys[i]);
-//       io.emit("gameUpdate", roomList[roomKeys[i]]);
-//     }
-//   }
-// }
-
 
 app.use(express.static(path.join(__dirname, "../client/build")));
 app.get("*", (req, res) =>
