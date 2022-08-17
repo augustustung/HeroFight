@@ -26,7 +26,7 @@ function RoomPage() {
     })
 
     socket.on('host_leave_room', () => {
-      if (currentRoom && currentRoom.players.length > 1) {
+      if (currentRoom && currentRoom.players && currentRoom.players.length > 1) {
         alert("Host left room")
         clearData()
       }

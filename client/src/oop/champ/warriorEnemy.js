@@ -1,53 +1,53 @@
-{
+module.exports = {
   "position": {
-    "x": 296.5,
+    "x": 686.5,
     "y": 0
   },
   "velocity": {
     "x": 0,
     "y": 0
   },
-  "imageSrc": "/img/warrior/Idle.png",
+  "imageSrc": "/img/warriorEnemy/Idle.png",
   "framesMax": 10,
   "scale": 2.5,
-  "color": "red",
+  "color": "blue",
   "offset": {
     "x": 165,
     "y": 100
   },
   "sprites": {
     "idle": {
-      "imageSrc": "/img/warrior/Idle.png",
+      "imageSrc": "/img/warriorEnemy/Idle.png",
       "framesMax": 10
     },
     "run": {
-      "imageSrc": "/img/warrior/Run.png",
+      "imageSrc": "/img/warriorEnemy/Run.png",
       "framesMax": 8
     },
     "jump": {
-      "imageSrc": "/img/warrior/Jump.png",
+      "imageSrc": "/img/warriorEnemy/Jump.png",
       "framesMax": 3
     },
     "fall": {
-      "imageSrc": "/img/warrior/Fall.png",
+      "imageSrc": "/img/warriorEnemy/Fall.png",
       "framesMax": 3
     },
     "attack1": {
-      "imageSrc": "/img/warrior/Attack1.png",
+      "imageSrc": "/img/warriorEnemy/Attack1.png",
       "framesMax": 7
     },
     "takeHit": {
-      "imageSrc": "/img/warrior/Take Hit.png",
+      "imageSrc": "/img/warriorEnemy/Take Hit.png",
       "framesMax": 3
     },
     "death": {
-      "imageSrc": "/img/warrior/Death.png",
+      "imageSrc": "/img/warriorEnemy/Death.png",
       "framesMax": 7
     }
   },
   "attackBox": {
     "offset": {
-      "x": 80,
+      "x": -90,
       "y": 65
     },
     "width": 90,

@@ -1,53 +1,53 @@
-{
+module.exports = {
   "position": {
-    "x": 266.5,
+    "x": 656.5,
     "y": 0
   },
   "velocity": {
     "x": 0,
     "y": 0
   },
-  "imageSrc": "/img/wizard/Idle.png",
+  "imageSrc": "/img/wizardEnemy/Idle.png",
   "framesMax": 6,
   "scale": 1.5,
-  "color": "red",
+  "color": "blue",
   "offset": {
     "x": 115,
     "y": 60
   },
   "sprites": {
     "idle": {
-      "imageSrc": "/img/wizard/Idle.png",
+      "imageSrc": "/img/wizardEnemy/Idle.png",
       "framesMax": 6
     },
     "run": {
-      "imageSrc": "/img/wizard/Run.png",
+      "imageSrc": "/img/wizardEnemy/Run.png",
       "framesMax": 8
     },
     "jump": {
-      "imageSrc": "/img/wizard/Jump.png",
+      "imageSrc": "/img/wizardEnemy/Jump.png",
       "framesMax": 2
     },
     "fall": {
-      "imageSrc": "/img/wizard/Fall.png",
+      "imageSrc": "/img/wizardEnemy/Fall.png",
       "framesMax": 2
     },
     "attack1": {
-      "imageSrc": "/img/wizard/Attack1.png",
+      "imageSrc": "/img/wizardEnemy/Attack1.png",
       "framesMax": 8
     },
     "takeHit": {
-      "imageSrc": "/img/wizard/Take Hit.png",
+      "imageSrc": "/img/wizardEnemy/Take Hit.png",
       "framesMax": 4
     },
     "death": {
-      "imageSrc": "/img/wizard/Death.png",
+      "imageSrc": "/img/wizardEnemy/Death.png",
       "framesMax": 7
     }
   },
   "attackBox": {
     "offset": {
-      "x": 100,
+      "x": -75,
       "y": 65
     },
     "width": 90,

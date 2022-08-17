@@ -71,7 +71,7 @@ class Fighter extends Sprite {
     }
   }
 
-  update(c, canvas) {
+  update(c, canvasHeight) {
     this.draw(c)
     if (!this.dead) this.animateFrames()
 
@@ -91,7 +91,7 @@ class Fighter extends Sprite {
     this.position.y += this.velocity.y
 
     // gravity function
-    if (this.position.y + this.height + this.velocity.y >= canvas.height - 96) {
+    if (this.position.y + this.height + this.velocity.y >= canvasHeight - 96) {
       this.velocity.y = 0
       this.position.y = 330
     } else this.velocity.y += gravity

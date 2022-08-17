@@ -1,4 +1,4 @@
-{
+module.exports =  {
   "position": {
     "x": 296.5,
     "y": 100
