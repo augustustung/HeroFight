@@ -813,11 +813,15 @@ function MainPage() {
       
       function handleCountdown() {
         setTimeout(() => {
-          countDownRef.current.innerHTML = 'FIGHT!'
+          if (countDownRef.current) {
+            countDownRef.current.innerHTML = 'FIGHT!'
+          }
           window.addEventListener('keyup', onKeyUp)
           window.addEventListener('keydown', onKeyDown)
           setTimeout(() => {
-            countDownRef.current.innerHTML = ''
+            if (countDownRef.current) {
+              countDownRef.current.innerHTML = ''
+            }
           }, 500)
         }, 3000)
       }
@@ -1026,11 +1030,6 @@ function MainPage() {
 
         // end game based on health
         if (player.health <= 0 || enemy.health <= 0) {
-          if (socket) {
-            socket.emit('game_over', {
-              roomId: currentRoom.roomId
-            })
-          }
           if (!isDone) {
             determineWinner()
             handleGameOver()
@@ -1039,22 +1038,24 @@ function MainPage() {
       }
 
       function determineWinner() {
-        timerRef.current.innerHTML = 0
-        document.getElementById('displayText').style.display = "flex"
+        if (timerRef.current) {
+          timerRef.current.innerHTML = 0
+        }
+        let displayTextEl = document.getElementById('displayText');
+        if (!displayTextEl) return;
+
         if (
           player.health === player.hp &&
           enemy.health === enemy.hp
         ) {
-          document.getElementById('displayText').innerHTML = "Tie"
+          displayTextEl.innerHTML = "Tie"
         } else if (player.health > enemy.health) {
-          document.getElementById('displayText').innerHTML = currentRoom.players[0].playerName + ' win!'
+          displayTextEl.innerHTML = currentRoom.players[0].playerName + ' win!'
         } else if (player.health < enemy.health) {
-          document.getElementById('displayText').innerHTML = currentRoom.players[1].playerName + ' win!';
+          displayTextEl.innerHTML = currentRoom.players[1].playerName + ' win!';
         }
       }
-    
-      console.log(player)
-      console.log(enemy)
+
       async function animate() {
         requestAnimationFrameId = requestAnimationFrame(animate)
         ctx.fillRect(0, 0, 1024, 576)
@@ -1116,7 +1117,7 @@ function MainPage() {
 
         setTimeout(() => {
           history.push('/waiting-room')
-        }, 1000)
+        }, 2000)
       }
 
       socket.on('game_over', () => {
@@ -1125,17 +1126,24 @@ function MainPage() {
       })
 
       socket.on('battle_update', (res) => {
-        timerRef.current.innerHTML = res
+        if (timerRef.current) {
+          timerRef.current.innerHTML = res
+        }
       })
     }
-
+    console.log('use effect')
     return () => {
+      console.log('use effect clean up')
       cancelAnimationFrame(requestAnimationFrameId)
       player = null
       enemy = null
       shop = null
       background = null
       isDone = false
+      socket.off('start_game')
+      socket.off('receive_action')
+      socket.off('game_over')
+      socket.off('battle_update')
     }
   }, [ctx])
 
