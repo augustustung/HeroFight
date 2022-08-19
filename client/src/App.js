@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import './App.css';
 import HomePage from './component/HomePage'
 import { useSelector } from 'react-redux'
@@ -36,12 +36,6 @@ const routes = {
 function App() {
   const user = useSelector(state => state.user)
   const { isLoggedIn } = user
-
-  useEffect(() => {
-    if (window.location.pathname !== '/' && (!user || !isLoggedIn)) {
-      window.location.href = '/'
-    }
-  },[])
 
   return (
     <main className="main_container">
