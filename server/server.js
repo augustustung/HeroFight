@@ -147,7 +147,7 @@ function connected(socket) {
     if (roomList[roomId].isStart) {
       roomList[roomId].players[playerIndex].isReady = true;
       if (
-        roomList[roomId].players[0].isReady && 
+        roomList[roomId].players[0].isReady &&
         roomList[roomId].players[1].isReady
       ) {
         io.emit("start_game");
@@ -190,7 +190,7 @@ function connected(socket) {
       });
       clearTimeout(roomList[roomId].timerId);
       roomList[roomId].timerId = null;
-      roomList[roomId].players[0].isReady = false; 
+      roomList[roomId].players[0].isReady = false;
       roomList[roomId].players[1].isReady = false;
     } else {
       io.emit('battle_update', roomList[roomId].countdownTime);
@@ -230,9 +230,9 @@ function connected(socket) {
   socket.on('disconnect', handleDisconnect);
 }
 
-app.use(express.static(path.join(__dirname, "../client/build")));
+app.use(express.static(path.join(__dirname, "./build")));
 app.get("*", (req, res) =>
-  res.sendFile(path.join(__dirname, "../client/build/index.html"))
+  res.sendFile(path.join(__dirname, "./build/index.html"))
 );
 
 server.listen(port, () => {
