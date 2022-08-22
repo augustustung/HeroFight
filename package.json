@@ -1,0 +1,12 @@
+{
+  "name": "hero_fight_project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Augustus Flynn",
+  "license": "ISC"
+}
