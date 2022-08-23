@@ -1,0 +1,24 @@
+{
+  "name": "mu",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "sync-contracts": "cp -rf ./build/contracts ../front_end/src/contracts",
+    "verify": "node ./scripts/verify.js"
+  },
+  "author": "meomeocoj",
+  "license": "ISC",
+  "dependencies": {
+    "@chainlink/contracts": "^0.4.1",
+    "@openzeppelin/contracts": "^4.6.0",
+    "chai": "^4.3.6",
+    "truffle-contract-size": "^2.0.1",
+    "truffle-plugin-solhint": "^0.0.6",
+    "truffle-plugin-verify": "^0.5.25"
+  }
+}
