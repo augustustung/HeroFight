@@ -34,8 +34,8 @@ const io = new Server(server, {
 
 
 var roomList = {};
-const TIME_LIMIT = 60
-
+const TIME_LIMIT = 60;
+const gravity = 0.7
 
 io.on('connect', connected);
 
@@ -159,23 +159,72 @@ function connected(socket) {
           });
         }, 3000);
 
-        class Fighter {
+        class Sprite {
+          constructor({
+            position,
+            scale = 1,
+            framesMax = 1,
+            offset = { x: 0, y: 0 }
+          }) {
+            this.position = position
+            this.width = 50
+            this.height = 150
+            this.scale = scale
+            this.framesMax = framesMax
+            this.framesCurrent = 0
+            this.framesElapsed = 0
+            this.framesHold = 5
+            this.offset = offset
+          }
+        }
+
+        class Fighter extends Sprite {
           constructor({
             position,
             velocity,
+            color = 'red',
+            scale = 1,
+            framesMax = 1,
+            offset = { x: 0, y: 0 },
             sprites,
+            minX,
+            maxX,
+            attackBox = { offset: {}, width: undefined, height: undefined },
             attackSpeed,
             damage,
             defense,
             hp
           }) {
-            this.position = position
+            super({
+              position,
+              scale,
+              framesMax,
+              offset
+            })
+            this.minX = minX
+            this.maxX = maxX
             this.velocity = velocity
+            this.width = 50
+            this.height = 150
             this.lastKey = "";
             this.isJumping = false;
+            this.attackBox = {
+              position: {
+                x: this.position.x,
+                y: this.position.y
+              },
+              offset: attackBox.offset,
+              width: attackBox.width,
+              height: attackBox.height
+            }
+            this.color = color
             this.isAttacking = false;
             this.health = hp
+            this.framesCurrent = 0
+            this.framesElapsed = 0
+            this.framesHold = 5
             this.sprites = sprites
+            this.sprite = 'idle'
             this.dead = false
             this.lastTimeAttack = new Date().getTime()
             this.attackSpeed = attackSpeed
@@ -190,6 +239,43 @@ function connected(socket) {
                 pressed: false
               }
             }
+          }
+
+          update() {
+            // attack boxes
+            this.attackBox.position.x = this.position.x + this.attackBox.offset.x
+            this.attackBox.position.y = this.position.y + this.attackBox.offset.y
+
+            this.position.x += this.velocity.x
+            this.position.y += this.velocity.y
+
+            // gravity function
+            if (this.position.y + this.height + this.velocity.y >= 576 - 96) {
+              this.velocity.y = 0
+              this.position.y = 330
+            } else {
+              this.velocity.y += gravity
+            }
+          }
+
+          getFigure() {
+            return ({
+              position: this.position,
+              velocity: this.velocity,
+              lastKey: this.lastKey,
+              isJumping: this.isJumping,
+              isAttacking: this.isAttacking,
+              health: this.health,
+              dead: this.dead,
+              lastTimeAttack: this.lastTimeAttack,
+              attackSpeed: this.attackSpeed,
+              damage: this.damage,
+              defense: this.defense,
+              hp: this.hp,
+              attackBox: this.attackBox,
+              keys: this.keys,
+              sprite: this.sprite
+            })
           }
         }
 
@@ -692,7 +778,6 @@ function connected(socket) {
           }
         }
 
-
         roomList[roomId].fighter1 = new Fighter(DEFAULT_DATA[roomList[roomId].players[0].champion])
         roomList[roomId].fighter2 = new Fighter(DEFAULT_DATA[roomList[roomId].players[1].champion + "Enemy"])
         io.emit('receive_action', {
@@ -700,11 +785,14 @@ function connected(socket) {
           p2: roomList[roomId].fighter2
         })
         roomList[roomId].gameIntervalId = setInterval(() => {
+          roomList[roomId].fighter1.update();
+          roomList[roomId].fighter2.update();
+          handleGameLogic(roomList[roomId].fighter1, roomList[roomId].fighter2);
           io.emit('receive_action', {
-            p1: roomList[roomId].fighter1,
-            p2: roomList[roomId].fighter2
+            p1: roomList[roomId].fighter1.getFigure(),
+            p2: roomList[roomId].fighter2.getFigure()
           })
-        }, 1000 / 60);
+        }, 1000 / 120);
       }
 
       socket.on('player_do_action', playerDoAction);
@@ -756,10 +844,146 @@ function connected(socket) {
     }
   }
 
-  function playerDoAction({ roomId, ...rest }) {
-    // io.emit('receive_action', {
-    //   ...rest
-    // });
+  function checkOnKeyUp(key, roomId, who) {
+    switch (key) {
+      case 'ArrowRight':
+        roomList[roomId][who].keys.ArrowRight.pressed = false
+        break
+      case 'ArrowLeft':
+        roomList[roomId][who].keys.ArrowLeft.pressed = false
+        break
+      default:
+        break;
+    }
+  }
+
+  function checkOnkeyDown(key, roomId, who) {
+    switch (key) {
+      case 'ArrowRight':
+        if (!roomList[roomId][who].keys.ArrowRight.pressed) {
+          roomList[roomId][who].keys.ArrowRight.pressed = true
+        }
+        roomList[roomId][who].lastKey = key
+        break
+      case 'ArrowLeft':
+        if (!roomList[roomId][who].keys.ArrowLeft.pressed) {
+          roomList[roomId][who].keys.ArrowLeft.pressed = true
+        }
+        roomList[roomId][who].lastKey = key
+        break;
+      case "ArrowUp":
+        if (!roomList[roomId][who].isJumping) {
+          roomList[roomId][who].isJumping = true
+          setTimeout(() => {
+            roomList[roomId][who].isJumping = false
+          }, 800)
+          roomList[roomId][who].velocity.y = -15
+        }
+        break;
+      // case " ":
+      // player.attack()
+      // break
+      default:
+        break;
+    }
+  }
+
+  function checkMovement(player) {
+    if (player.keys.ArrowLeft.pressed && player.lastKey === 'ArrowLeft') {
+      if (player.position.x <= player.minX) {
+        player.position.x = player.minX + 1
+        player.velocity.x = 0
+      } else {
+        player.velocity.x = -5
+      }
+      player.sprite = 'run'
+    } else if (player.keys.ArrowRight.pressed && player.lastKey === 'ArrowRight') {
+      if (player.position.x >= player.maxX) {
+        player.position.x = player.maxX - 1
+        player.velocity.x = 0
+      } else {
+        player.velocity.x = 5
+      }
+      player.sprite = 'run'
+    } else {
+      player.velocity.x = 0
+      player.sprite = 'idle'
+    }
+
+    // jumping
+    if (player.velocity.y < 0 && !player.isJumping) {
+      player.sprite = 'jump'
+      player.isJumping = true
+    } else if (player.velocity.y > 0) {
+      player.sprite = 'fall'
+    }
+  }
+
+  function checkCollisionAndGetsHit(player, enemy, id) {
+    // detect for collision & enemy gets hit
+    if (
+      rectangularCollision({
+        rectangle1: player,
+        rectangle2: enemy
+      }) &&
+      player.isAttacking &&
+      player.framesCurrent === 4
+    ) {
+      enemy.takeHit(player.damage)
+      player.isAttacking = false
+      gsap.to(id, {
+        width: (enemy.health / enemy.hp * 100) + '%'
+      })
+    }
+
+    // if player misses
+    if (player.isAttacking && player.framesCurrent === 4) {
+      player.isAttacking = false
+    }
+  }
+
+  function rectangularCollision({ rectangle1, rectangle2 }) {
+    return (
+      rectangle1.attackBox.position.x + rectangle1.attackBox.width >=
+      rectangle2.position.x &&
+      rectangle1.attackBox.position.x <=
+      rectangle2.position.x + rectangle2.width &&
+      rectangle1.attackBox.position.y + rectangle1.attackBox.height >=
+      rectangle2.position.y &&
+      rectangle1.attackBox.position.y <= rectangle2.position.y + rectangle2.height
+    )
+  }
+
+  async function handleGameLogic(fighter1, fighter2) {
+    checkMovement(fighter1);
+    checkMovement(fighter2);
+
+    // checkCollisionAndGetsHit(
+    //   playerDetail.isHost ? player : enemy,
+    //   playerDetail.isHost ? enemy : player,
+    //   playerDetail.isHost ? "#enemyHealth" : "#playerHealth"
+    // );
+    // checkCollisionAndGetsHit(
+    //   playerDetail.isHost ? enemy : player,
+    //   playerDetail.isHost ? player : enemy,
+    //   playerDetail.isHost ? "#playerHealth" : "#enemyHealth"
+    // );
+
+    // // end game based on health
+    // if (player.health <= 0 || enemy.health <= 0) {
+    //   if (!isDone) {
+    //     determineWinner()
+    //     handleGameOver()
+    //   }
+    // }
+  }
+
+  function playerDoAction({ roomId, key, type, who }) {
+    if (type === "UP") {
+      checkOnKeyUp(key, roomId, who);
+    } else {
+      checkOnkeyDown(key, roomId, who);
+    }
   }
 
   // handle room
@@ -768,11 +992,6 @@ function connected(socket) {
   socket.on('create_room', playerCreateRoom);
 
   socket.on('join_room', playerJoinRoom);
-
-  socket.on('load_room', async ({ roomId }) => {
-    io.sockets.adapter.rooms[roomId]
-    await socket.join(roomId)
-  })
 
   socket.on('player_change_status', playerChangeStatus);
 
@@ -783,7 +1002,6 @@ function connected(socket) {
 
   // handle in game
   socket.on('player_load_completely', playerLoadCompleted);
-
   // end of handle in game
 
   socket.on('disconnect', handleDisconnect);

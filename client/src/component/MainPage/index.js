@@ -5,7 +5,6 @@ import { useHistory } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { socket } from '../../Socket';
 
-const gravity = 0.7
 let player, enemy
 let shop, background
 let isDone
@@ -114,6 +113,7 @@ function MainPage() {
           this.height = 150
           this.lastKey = "";
           this.isJumping = false;
+          this.sprite = 'idle';
           this.attackBox = {
             position: {
               x: this.position.x,
@@ -151,30 +151,9 @@ function MainPage() {
           }
         }
 
-        update(c, canvasHeight) {
+        update(c) {
           this.draw(c)
           if (!this.dead) this.animateFrames()
-
-          // attack boxes
-          this.attackBox.position.x = this.position.x + this.attackBox.offset.x
-          this.attackBox.position.y = this.position.y + this.attackBox.offset.y
-
-          // draw the attack box
-          c.fillRect(
-            this.attackBox.position.x,
-            this.attackBox.position.y,
-            this.attackBox.width,
-            this.attackBox.height
-          )
-
-          this.position.x += this.velocity.x
-          this.position.y += this.velocity.y
-
-          // gravity function
-          if (this.position.y + this.height + this.velocity.y >= canvasHeight - 96) {
-            this.velocity.y = 0
-            this.position.y = 330
-          } else this.velocity.y += gravity
         }
 
         attack() {
@@ -273,19 +252,25 @@ function MainPage() {
         }
 
         updateFigures(newData) {
-          this.velocity = newData.velocity
+          this.position = newData.position;
+          this.velocity = newData.velocity;
           this.lastKey = newData.lastKey;
           this.isJumping = newData.isJumping;
           this.attackBox = newData.attackBox;
           this.isAttacking = newData.isAttacking;
           this.health = newData.health
-          this.framesCurrent = newData.framesCurrent
-          this.framesElapsed = newData.framesElapsed
-          this.framesHold = newData.framesHold
-          this.sprites = newData.sprites
           this.dead = newData.dead
           this.lastTimeAttack = newData.lastTimeAttack
           this.keys = newData.keys
+          this.attackSpeed = newData.attackSpeed
+          this.damage = newData.damage
+          this.defense = newData.defense
+          this.hp = newData.hp
+          console.log(newData.sprite)
+          if (this.sprite !== newData.sprite) {
+            this.switchSprite(newData.sprite);
+            this.sprite = newData.sprite;
+          }
         }
       }
 
@@ -930,103 +915,10 @@ function MainPage() {
       async function setStateFighter({
         p1, p2
       }) {
-        console.log('get new fighter data');
-        // player.updateFigures(p1)
-        // enemy.updateFigures(p2)
-      }
-
-
-      function rectangularCollision({ rectangle1, rectangle2 }) {
-        return (
-          rectangle1.attackBox.position.x + rectangle1.attackBox.width >=
-          rectangle2.position.x &&
-          rectangle1.attackBox.position.x <=
-          rectangle2.position.x + rectangle2.width &&
-          rectangle1.attackBox.position.y + rectangle1.attackBox.height >=
-          rectangle2.position.y &&
-          rectangle1.attackBox.position.y <= rectangle2.position.y + rectangle2.height
-        )
-      }
-
-      function checkMovement(player) {
-        if (player.keys.ArrowLeft.pressed && player.lastKey === 'ArrowLeft') {
-          if (player.position.x <= player.minX) {
-            player.position.x = player.minX + 1
-            player.velocity.x = 0
-          } else {
-            player.velocity.x = -5
-          }
-          player.switchSprite('run')
-        } else if (player.keys.ArrowRight.pressed && player.lastKey === 'ArrowRight') {
-          if (player.position.x >= player.maxX) {
-            player.position.x = player.maxX - 1
-            player.velocity.x = 0
-          } else {
-            player.velocity.x = 5
-          }
-          player.switchSprite('run')
-        } else {
-          player.velocity.x = 0
-          player.switchSprite('idle')
-        }
-
-        // jumping
-        if (player.velocity.y < 0 && (player && !player.isJumping)) {
-          player.switchSprite('jump')
-          player.isJumping = true
-        } else if (player.velocity.y > 0) {
-          player.switchSprite('fall')
-        }
-      }
-
-      function checkCollisionAndGetsHit(player, enemy, id) {
-        // detect for collision & enemy gets hit
-        if (
-          rectangularCollision({
-            rectangle1: player,
-            rectangle2: enemy
-          }) &&
-          player.isAttacking &&
-          player.framesCurrent === 4
-        ) {
-          enemy.takeHit(player.damage)
-          player.isAttacking = false
-          gsap.to(id, {
-            width: (enemy.health / enemy.hp * 100) + '%'
-          })
-        }
-
-        // if player misses
-        if (player.isAttacking && player.framesCurrent === 4) {
-          player.isAttacking = false
-        }
-      }
-
-      async function checkPlayerAction() {
-        if (!player || !enemy) {
-          return;
-        }
-        checkMovement(playerDetail.isHost ? player : enemy);
-        checkMovement(playerDetail.isHost ? enemy : player);
-
-        checkCollisionAndGetsHit(
-          playerDetail.isHost ? player : enemy,
-          playerDetail.isHost ? enemy : player,
-          playerDetail.isHost ? "#enemyHealth" : "#playerHealth"
-        );
-        checkCollisionAndGetsHit(
-          playerDetail.isHost ? enemy : player,
-          playerDetail.isHost ? player : enemy,
-          playerDetail.isHost ? "#playerHealth" : "#enemyHealth"
-        );
-
-        // end game based on health
-        if (player.health <= 0 || enemy.health <= 0) {
-          if (!isDone) {
-            determineWinner()
-            handleGameOver()
-          }
-        }
+        console.log('receive action')
+        console.log(JSON.stringify(p1.keys))
+        player.updateFigures(p1)
+        enemy.updateFigures(p2)
       }
 
       function determineWinner() {
@@ -1058,8 +950,8 @@ function MainPage() {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'
         ctx.fillRect(0, 0, 1024, 576)
         if (player && enemy) {
-          player.update(ctx, 576)
-          enemy.update(ctx, 576)
+          player.update(ctx)
+          enemy.update(ctx)
           player.velocity.x = 0
           enemy.velocity.x = 0
           if (isDone) {
@@ -1072,8 +964,6 @@ function MainPage() {
             enemy.isAttacking = false;
             enemy.isJumping = false;
             enemy.switchSprite('idle')
-          } else {
-            checkPlayerAction()
           }
         }
       }
