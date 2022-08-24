@@ -133,6 +133,7 @@ function connected(socket) {
     if (roomId) {
       if (playerLeave.isHost) {
         clearTimeout(roomList[roomId].timerId);
+        clearInterval(roomList[roomId].gameIntervalId);
         io.emit("host_leave_room");
         delete roomList[roomId];
       } else {
@@ -157,16 +158,569 @@ function connected(socket) {
             roomId: roomId
           });
         }, 3000);
+
+        class Fighter {
+          constructor({
+            position,
+            velocity,
+            sprites,
+            attackSpeed,
+            damage,
+            defense,
+            hp
+          }) {
+            this.position = position
+            this.velocity = velocity
+            this.lastKey = "";
+            this.isJumping = false;
+            this.isAttacking = false;
+            this.health = hp
+            this.sprites = sprites
+            this.dead = false
+            this.lastTimeAttack = new Date().getTime()
+            this.attackSpeed = attackSpeed
+            this.damage = damage
+            this.defense = defense
+            this.hp = hp
+            this.keys = {
+              ArrowRight: {
+                pressed: false
+              },
+              ArrowLeft: {
+                pressed: false
+              }
+            }
+          }
+        }
+
+        const DEFAULT_DATA = {
+          hero: {
+            "position": {
+              "x": 296.5,
+              "y": 100
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            },
+            "imageSrc": "/img/hero/Idle.png",
+            "framesMax": 11,
+            "scale": 2.5,
+            "color": "blue",
+            "offset": {
+              "x": 140,
+              "y": 55
+            },
+            "sprites": {
+              "idle": {
+                "imageSrc": "/img/hero/Idle.png",
+                "framesMax": 11
+              },
+              "run": {
+                "imageSrc": "/img/hero/Run.png",
+                "framesMax": 8
+              },
+              "jump": {
+                "imageSrc": "/img/hero/Jump.png",
+                "framesMax": 4
+              },
+              "fall": {
+                "imageSrc": "/img/hero/Fall.png",
+                "framesMax": 4
+              },
+              "attack1": {
+                "imageSrc": "/img/hero/Attack.png",
+                "framesMax": 6
+              },
+              "takeHit": {
+                "imageSrc": "/img/hero/Take Hit.png",
+                "framesMax": 4
+              },
+              "death": {
+                "imageSrc": "/img/hero/Death.png",
+                "framesMax": 9
+              }
+            },
+            "attackBox": {
+              "offset": {
+                "x": 90,
+                "y": 80
+              },
+              "width": 80,
+              "height": 50
+            },
+            "minX": 6,
+            "maxX": 945,
+            "attackSpeed": "700",
+            "damage": "50",
+            "defense": "39",
+            "hp": "700.53"
+          },
+          heroEnemy: {
+            "position": {
+              "x": 666.5,
+              "y": 100
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            },
+            "imageSrc": "/img/heroEnemy/Idle.png",
+            "framesMax": 11,
+            "scale": 2.5,
+            "color": "blue",
+            "offset": {
+              "x": 140,
+              "y": 55
+            },
+            "sprites": {
+              "idle": {
+                "imageSrc": "/img/heroEnemy/Idle.png",
+                "framesMax": 11
+              },
+              "run": {
+                "imageSrc": "/img/heroEnemy/Run.png",
+                "framesMax": 8
+              },
+              "jump": {
+                "imageSrc": "/img/heroEnemy/Jump.png",
+                "framesMax": 4
+              },
+              "fall": {
+                "imageSrc": "/img/heroEnemy/Fall.png",
+                "framesMax": 4
+              },
+              "attack1": {
+                "imageSrc": "/img/heroEnemy/Attack.png",
+                "framesMax": 6
+              },
+              "takeHit": {
+                "imageSrc": "/img/heroEnemy/Take Hit.png",
+                "framesMax": 4
+              },
+              "death": {
+                "imageSrc": "/img/heroEnemy/Death.png",
+                "framesMax": 9
+              }
+            },
+            "attackBox": {
+              "offset": {
+                "x": -95,
+                "y": 80
+              },
+              "width": 80,
+              "height": 50
+            },
+            "minX": 6,
+            "maxX": 945,
+            "attackSpeed": "700",
+            "damage": "50",
+            "defense": "39",
+            "hp": "700.53"
+          },
+          samuraiMack: {
+            "position": {
+              "x": 306.5,
+              "y": 0
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            },
+            "imageSrc": "/img/samuraiMack/Idle.png",
+            "framesMax": 8,
+            "color": "red",
+            "scale": 2.5,
+            "offset": {
+              "x": 215,
+              "y": 157
+            },
+            "sprites": {
+              "idle": {
+                "imageSrc": "/img/samuraiMack/Idle.png",
+                "framesMax": 8
+              },
+              "run": {
+                "imageSrc": "/img/samuraiMack/Run.png",
+                "framesMax": 8
+              },
+              "jump": {
+                "imageSrc": "/img/samuraiMack/Jump.png",
+                "framesMax": 2
+              },
+              "fall": {
+                "imageSrc": "/img/samuraiMack/Fall.png",
+                "framesMax": 2
+              },
+              "attack1": {
+                "imageSrc": "/img/samuraiMack/Attack1.png",
+                "framesMax": 6
+              },
+              "takeHit": {
+                "imageSrc": "/img/samuraiMack/Take Hit.png",
+                "framesMax": 4
+              },
+              "death": {
+                "imageSrc": "/img/samuraiMack/Death.png",
+                "framesMax": 6
+              }
+            },
+            "attackBox": {
+              "offset": {
+                "x": 100,
+                "y": 50
+              },
+              "width": 160,
+              "height": 50
+            },
+            "minX": 10,
+            "maxX": 940,
+            "attackSpeed": "200",
+            "damage": "60.4",
+            "defense": "31.5",
+            "hp": "665"
+          },
+          samuraiMackEnemy: {
+            "position": {
+              "x": 656.5,
+              "y": 0
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            },
+            "imageSrc": "/img/samuraiMackEnemy/Idle.png",
+            "framesMax": 8,
+            "scale": 2.5,
+            "color": "blue",
+            "offset": {
+              "x": 215,
+              "y": 157
+            },
+            "sprites": {
+              "idle": {
+                "imageSrc": "/img/samuraiMackEnemy/Idle.png",
+                "framesMax": 8
+              },
+              "run": {
+                "imageSrc": "/img/samuraiMackEnemy/Run.png",
+                "framesMax": 8
+              },
+              "jump": {
+                "imageSrc": "/img/samuraiMackEnemy/Jump.png",
+                "framesMax": 2
+              },
+              "fall": {
+                "imageSrc": "/img/samuraiMackEnemy/Fall.png",
+                "framesMax": 2
+              },
+              "attack1": {
+                "imageSrc": "/img/samuraiMackEnemy/Attack1.png",
+                "framesMax": 6
+              },
+              "takeHit": {
+                "imageSrc": "/img/samuraiMackEnemy/Take Hit.png",
+                "framesMax": 4
+              },
+              "death": {
+                "imageSrc": "/img/samuraiMackEnemy/Death.png",
+                "framesMax": 6
+              }
+            },
+            "attackBox": {
+              "offset": {
+                "x": -170,
+                "y": 50
+              },
+              "width": 160,
+              "height": 50
+            },
+            "maxX": 940,
+            "minX": 10,
+            "attackSpeed": "200",
+            "damage": "60.4",
+            "defense": "31.5",
+            "hp": "665"
+          },
+          warrior: {
+            "position": {
+              "x": 296.5,
+              "y": 0
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            },
+            "imageSrc": "/img/warrior/Idle.png",
+            "framesMax": 10,
+            "scale": 2.5,
+            "color": "red",
+            "offset": {
+              "x": 165,
+              "y": 100
+            },
+            "sprites": {
+              "idle": {
+                "imageSrc": "/img/warrior/Idle.png",
+                "framesMax": 10
+              },
+              "run": {
+                "imageSrc": "/img/warrior/Run.png",
+                "framesMax": 8
+              },
+              "jump": {
+                "imageSrc": "/img/warrior/Jump.png",
+                "framesMax": 3
+              },
+              "fall": {
+                "imageSrc": "/img/warrior/Fall.png",
+                "framesMax": 3
+              },
+              "attack1": {
+                "imageSrc": "/img/warrior/Attack1.png",
+                "framesMax": 7
+              },
+              "takeHit": {
+                "imageSrc": "/img/warrior/Take Hit.png",
+                "framesMax": 3
+              },
+              "death": {
+                "imageSrc": "/img/warrior/Death.png",
+                "framesMax": 7
+              }
+            },
+            "attackBox": {
+              "offset": {
+                "x": 80,
+                "y": 65
+              },
+              "width": 90,
+              "height": 40
+            },
+            "minX": 5,
+            "maxX": 945,
+            "attackSpeed": "900",
+            "damage": "71.3",
+            "defense": "36.5",
+            "hp": "635"
+          },
+          warriorEnemy: {
+            "position": {
+              "x": 686.5,
+              "y": 0
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            },
+            "imageSrc": "/img/warriorEnemy/Idle.png",
+            "framesMax": 10,
+            "scale": 2.5,
+            "color": "blue",
+            "offset": {
+              "x": 165,
+              "y": 100
+            },
+            "sprites": {
+              "idle": {
+                "imageSrc": "/img/warriorEnemy/Idle.png",
+                "framesMax": 10
+              },
+              "run": {
+                "imageSrc": "/img/warriorEnemy/Run.png",
+                "framesMax": 8
+              },
+              "jump": {
+                "imageSrc": "/img/warriorEnemy/Jump.png",
+                "framesMax": 3
+              },
+              "fall": {
+                "imageSrc": "/img/warriorEnemy/Fall.png",
+                "framesMax": 3
+              },
+              "attack1": {
+                "imageSrc": "/img/warriorEnemy/Attack1.png",
+                "framesMax": 7
+              },
+              "takeHit": {
+                "imageSrc": "/img/warriorEnemy/Take Hit.png",
+                "framesMax": 3
+              },
+              "death": {
+                "imageSrc": "/img/warriorEnemy/Death.png",
+                "framesMax": 7
+              }
+            },
+            "attackBox": {
+              "offset": {
+                "x": -90,
+                "y": 65
+              },
+              "width": 90,
+              "height": 40
+            },
+            "minX": 5,
+            "maxX": 945,
+            "attackSpeed": "900",
+            "damage": "71.3",
+            "defense": "36.5",
+            "hp": "635"
+          },
+          wizard: {
+            "position": {
+              "x": 266.5,
+              "y": 0
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            },
+            "imageSrc": "/img/wizard/Idle.png",
+            "framesMax": 6,
+            "scale": 1.5,
+            "color": "red",
+            "offset": {
+              "x": 115,
+              "y": 60
+            },
+            "sprites": {
+              "idle": {
+                "imageSrc": "/img/wizard/Idle.png",
+                "framesMax": 6
+              },
+              "run": {
+                "imageSrc": "/img/wizard/Run.png",
+                "framesMax": 8
+              },
+              "jump": {
+                "imageSrc": "/img/wizard/Jump.png",
+                "framesMax": 2
+              },
+              "fall": {
+                "imageSrc": "/img/wizard/Fall.png",
+                "framesMax": 2
+              },
+              "attack1": {
+                "imageSrc": "/img/wizard/Attack1.png",
+                "framesMax": 8
+              },
+              "takeHit": {
+                "imageSrc": "/img/wizard/Take Hit.png",
+                "framesMax": 4
+              },
+              "death": {
+                "imageSrc": "/img/wizard/Death.png",
+                "framesMax": 7
+              }
+            },
+            "attackBox": {
+              "offset": {
+                "x": 100,
+                "y": 65
+              },
+              "width": 90,
+              "height": 50
+            },
+            "minX": 5,
+            "maxX": 925,
+            "attackSpeed": "800",
+            "damage": "50.576",
+            "defense": "51",
+            "hp": "663"
+          },
+          wizardEnemy: {
+            "position": {
+              "x": 656.5,
+              "y": 0
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            },
+            "imageSrc": "/img/wizardEnemy/Idle.png",
+            "framesMax": 6,
+            "scale": 1.5,
+            "color": "blue",
+            "offset": {
+              "x": 115,
+              "y": 60
+            },
+            "sprites": {
+              "idle": {
+                "imageSrc": "/img/wizardEnemy/Idle.png",
+                "framesMax": 6
+              },
+              "run": {
+                "imageSrc": "/img/wizardEnemy/Run.png",
+                "framesMax": 8
+              },
+              "jump": {
+                "imageSrc": "/img/wizardEnemy/Jump.png",
+                "framesMax": 2
+              },
+              "fall": {
+                "imageSrc": "/img/wizardEnemy/Fall.png",
+                "framesMax": 2
+              },
+              "attack1": {
+                "imageSrc": "/img/wizardEnemy/Attack1.png",
+                "framesMax": 8
+              },
+              "takeHit": {
+                "imageSrc": "/img/wizardEnemy/Take Hit.png",
+                "framesMax": 4
+              },
+              "death": {
+                "imageSrc": "/img/wizardEnemy/Death.png",
+                "framesMax": 7
+              }
+            },
+            "attackBox": {
+              "offset": {
+                "x": -75,
+                "y": 65
+              },
+              "width": 90,
+              "height": 50
+            },
+            "minX": 5,
+            "maxX": 925,
+            "attackSpeed": "800",
+            "damage": "50.576",
+            "defense": "51",
+            "hp": "663"
+          }
+        }
+
+
+        roomList[roomId].fighter1 = new Fighter(DEFAULT_DATA[roomList[roomId].players[0].champion])
+        roomList[roomId].fighter2 = new Fighter(DEFAULT_DATA[roomList[roomId].players[1].champion + "Enemy"])
+        io.emit('receive_action', {
+          p1: roomList[roomId].fighter1,
+          p2: roomList[roomId].fighter2
+        })
+        roomList[roomId].gameIntervalId = setInterval(() => {
+          io.emit('receive_action', {
+            p1: roomList[roomId].fighter1,
+            p2: roomList[roomId].fighter2
+          })
+        }, 1000 / 60);
       }
+
       socket.on('player_do_action', playerDoAction);
 
       socket.on('battle_off', async ({ roomId }) => {
         clearTimeout(roomList[roomId].timerId);
+        clearInterval(roomList[roomId].gameIntervalId);
+        roomList[roomId].gameIntervalId = null;
         roomList[roomId].timerId = null;
+        roomList[roomId].fighter1 = null;
+        roomList[roomId].fighter2 = null;
         roomList[roomId].players[0].isReady = false;
         roomList[roomId].players[1].isReady = false;
         await socket.leave(roomId)
-      })
+      });
+
     } else {
       console.log('room is not start', roomId)
     }
@@ -189,7 +743,12 @@ function connected(socket) {
         players: roomList[roomId].players
       });
       clearTimeout(roomList[roomId].timerId);
+      clearInterval(roomList[roomId].gameIntervalId);
+      roomList[roomId].gameIntervalId = null;
+      roomList[roomId].fighter1 = null;
+      roomList[roomId].fighter2 = null;
       roomList[roomId].timerId = null;
+      roomList[roomId].gameIntervalId = null;
       roomList[roomId].players[0].isReady = false;
       roomList[roomId].players[1].isReady = false;
     } else {
@@ -198,9 +757,9 @@ function connected(socket) {
   }
 
   function playerDoAction({ roomId, ...rest }) {
-    io.emit('receive_action', {
-      ...rest
-    });
+    // io.emit('receive_action', {
+    //   ...rest
+    // });
   }
 
   // handle room

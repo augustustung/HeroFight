@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './App.css';
 import HomePage from './component/HomePage'
 import { useSelector } from 'react-redux'
@@ -37,28 +37,38 @@ function App() {
   const user = useSelector(state => state.user)
   const { isLoggedIn } = user
 
+  useEffect(() => {
+    if (
+      !isLoggedIn &&
+      !/\.[jpg png jpeg png]/g.test(window.location.pathname) &&
+      window.location.pathname !== '/'
+    ) {
+      window.location.href = '/'
+    }
+  }, [])
+
   return (
     <main className="main_container">
       <Router>
         <Switch>
           {(!user || !isLoggedIn) ? (
-            <Route path="/" exact component={(props) => <Layout {...props} Component={HomePage}  />} />
+            <Route path="/" exact component={(props) => <Layout {...props} Component={HomePage} />} />
           ) : (
             <Route path='/' exact component={(props) => <Layout {...user}  {...props} Component={FindRoom} />} />
           )}
-          {Object.keys(routes).map((key, index)=>{
-            if(isLoggedIn && routes[key].isAuth) {
+          {Object.keys(routes).map((key, index) => {
+            if (isLoggedIn && routes[key].isAuth) {
               return (
-                <Route 
-                  key={index} extract 
-                  path={routes[key].path} 
-                  component={routes[key].component} 
+                <Route
+                  key={index} extract
+                  path={routes[key].path}
+                  component={routes[key].component}
                 />
               )
             } else if (!routes[key].isAuth) {
               return (
-                <Route 
-                  path={routes[key].path} key={index} exact 
+                <Route
+                  path={routes[key].path} key={index} exact
                   component={(props) => <Layout  {...props} Component={routes[key].component} />} />
               )
             }

@@ -49,7 +49,7 @@ function MainPage() {
           this.framesHold = 5
           this.offset = offset
         }
-      
+
         draw(c) {
           c.drawImage(
             this.image,
@@ -63,10 +63,10 @@ function MainPage() {
             this.image.height * this.scale
           )
         }
-      
+
         animateFrames() {
           this.framesElapsed++
-      
+
           if (this.framesElapsed % this.framesHold === 0) {
             if (this.framesCurrent < this.framesMax - 1) {
               this.framesCurrent++
@@ -75,13 +75,13 @@ function MainPage() {
             }
           }
         }
-      
+
         update(c) {
           this.draw(c)
           this.animateFrames()
         }
       }
-      
+
       class Fighter extends Sprite {
         constructor({
           position,
@@ -308,7 +308,7 @@ function MainPage() {
         scale: 2.75,
         framesMax: 6
       })
-      
+
       const DEFAULT_DATA = {
         hero: {
           "position": {
@@ -810,7 +810,7 @@ function MainPage() {
 
       player = new Fighter(DEFAULT_DATA[currentRoom.players[0].champion])
       enemy = new Fighter(DEFAULT_DATA[currentRoom.players[1].champion + "Enemy"])
-      
+
       function handleCountdown() {
         setTimeout(() => {
           if (countDownRef.current) {
@@ -827,13 +827,15 @@ function MainPage() {
       }
 
       function handleEmitAction(payload) {
+        console.log('emit action')
         socket.emit('player_do_action', {
-          ...payload,
+          key: payload.key,
+          type: payload.type,
           roomId: currentRoom.roomId,
           who: playerDetail.isHost ? 'fighter1' : 'fighter2'
         });
       }
-    
+
       function checkOnKeyUp(key, isHost) {
         if (isHost) {
           switch (key) {
@@ -855,51 +857,51 @@ function MainPage() {
           }
         }
       }
-    
+
       function onKeyUp(event) {
         if (isDone) return;
-        checkOnKeyUp(event.key, playerDetail.isHost);
+        // checkOnKeyUp(event.key, playerDetail.isHost);
         handleEmitAction({
           key: event.key,
           type: "UP"
         })
       }
-    
+
       function handleCheckOnkeyDown(key, player) {
         let isEmit = true
         switch (key) {
           case 'ArrowRight':
             if (!player.keys.ArrowRight.pressed) {
-              player.keys.ArrowRight.pressed = true
+              // player.keys.ArrowRight.pressed = true
             } else {
               isEmit = false
             }
-            player.lastKey = key
+            // player.lastKey = key
             break
           case 'ArrowLeft':
             if (!player.keys.ArrowLeft.pressed) {
-              player.keys.ArrowLeft.pressed = true
+              // player.keys.ArrowLeft.pressed = true
             } else {
               isEmit = false
             }
-            player.lastKey = key
+            // player.lastKey = key
             break
-          case " ":
-            player.attack()
-            break
-          case "ArrowUp":
-            if (!player.isJumping) {
-              player.isJumping = true
-              setTimeout(() => {
-                player.isJumping = false
-              }, 800)
-              player.velocity.y = -15
-            }
-            break
+          // case " ":
+          // player.attack()
+          // break
+          // case "ArrowUp":
+          // if (!player.isJumping) {
+          //   player.isJumping = true
+          //   setTimeout(() => {
+          //     player.isJumping = false
+          //   }, 800)
+          //   player.velocity.y = -15
+          // }
+          // break
         }
         return isEmit
       }
-    
+
       function checkOnKeyDown(key, isHost) {
         let isEmit = true
         if (isHost) {
@@ -909,7 +911,7 @@ function MainPage() {
         }
         return isEmit
       }
-    
+
       function onKeyDown(event) {
         if (isDone) return;
         const isEmit = checkOnKeyDown(event.key, playerDetail.isHost)
@@ -920,30 +922,20 @@ function MainPage() {
           })
         }
       }
-      
+
       async function handleStartGame() {
         handleCountdown()
       }
 
-      async function setStateFighter({ key, type, who }) {
-        if (playerDetail.isHost && who === 'fighter2') {
-          // update enemy
-          if (type === "UP") {
-            checkOnKeyUp(key, false)
-          } else if (type === "DOWN") {
-            checkOnKeyDown(key, false)
-          }
-        } else if (!playerDetail.isHost && who === 'fighter1') {
-          // up date player
-          if (type === "UP") {
-            checkOnKeyUp(key, true)
-          } else if (type === "DOWN") {
-            checkOnKeyDown(key, true)
-          }
-        }
+      async function setStateFighter({
+        p1, p2
+      }) {
+        console.log('get new fighter data');
+        // player.updateFigures(p1)
+        // enemy.updateFigures(p2)
       }
 
-      
+
       function rectangularCollision({ rectangle1, rectangle2 }) {
         return (
           rectangle1.attackBox.position.x + rectangle1.attackBox.width >=
@@ -1009,7 +1001,7 @@ function MainPage() {
           player.isAttacking = false
         }
       }
-          
+
       async function checkPlayerAction() {
         if (!player || !enemy) {
           return;
@@ -1075,7 +1067,7 @@ function MainPage() {
             player.isAttacking = false;
             player.isJumping = false;
             player.switchSprite('idle')
-            
+
             enemy.velocity.x = 0;
             enemy.isAttacking = false;
             enemy.isJumping = false;

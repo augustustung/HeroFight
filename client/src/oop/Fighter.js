@@ -193,7 +193,7 @@ class Fighter extends Sprite {
   }
 
   updateFigures(newData) {
-    this.velocity = newData.velocity
+    this.velocity = newData.velocity;
     this.lastKey = newData.lastKey;
     this.isJumping = newData.isJumping;
     this.attackBox = newData.attackBox;
