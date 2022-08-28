@@ -164,9 +164,8 @@ function MainPage() {
           }
         }
 
-        takeHit(receiveAtk) {
-          this.health -= Math.abs(receiveAtk - this.defense * 0.5)
-          if (this.health <= 0) {
+        takeHit(newHp) {
+          if (newHp <= 0) {
             this.switchSprite('death')
           } else {
             this.switchSprite('takeHit')
@@ -193,9 +192,11 @@ function MainPage() {
             this.framesCurrent < this.sprites.takeHit.framesMax - 1
           )
             return
-
+          console.log('switch sprite', sprite)
+          console.log(this.image, this.sprites.idle.image)
           switch (sprite) {
             case 'idle':
+              console.log(this.image !== this.sprites.idle.image)
               if (this.image !== this.sprites.idle.image) {
                 this.image = this.sprites.idle.image
                 this.framesMax = this.sprites.idle.framesMax
@@ -266,8 +267,11 @@ function MainPage() {
           this.damage = newData.damage
           this.defense = newData.defense
           this.hp = newData.hp
-          console.log(newData.sprite)
-          if (this.sprite !== newData.sprite) {
+
+          console.log('this.sprite', this.sprite)
+          if (newData.isAttacking) {
+            this.switchSprite('attack1')
+          } else if (this.sprite !== newData.sprite) {
             this.switchSprite(newData.sprite);
             this.sprite = newData.sprite;
           }
@@ -812,6 +816,7 @@ function MainPage() {
       }
 
       function handleEmitAction(payload) {
+        if (window.location.pathname !== '/fight') return;
         console.log('emit action')
         socket.emit('player_do_action', {
           key: payload.key,
@@ -821,31 +826,8 @@ function MainPage() {
         });
       }
 
-      function checkOnKeyUp(key, isHost) {
-        if (isHost) {
-          switch (key) {
-            case 'ArrowRight':
-              player.keys.ArrowRight.pressed = false
-              break
-            case 'ArrowLeft':
-              player.keys.ArrowLeft.pressed = false
-              break
-          }
-        } else {
-          switch (key) {
-            case 'ArrowRight':
-              enemy.keys.ArrowRight.pressed = false
-              break
-            case 'ArrowLeft':
-              enemy.keys.ArrowLeft.pressed = false
-              break
-          }
-        }
-      }
-
       function onKeyUp(event) {
-        if (isDone) return;
-        // checkOnKeyUp(event.key, playerDetail.isHost);
+        if (window.location.pathname !== '/fight') return;
         handleEmitAction({
           key: event.key,
           type: "UP"
@@ -856,33 +838,17 @@ function MainPage() {
         let isEmit = true
         switch (key) {
           case 'ArrowRight':
-            if (!player.keys.ArrowRight.pressed) {
-              // player.keys.ArrowRight.pressed = true
-            } else {
+            if (player.keys.ArrowRight.pressed) {
               isEmit = false
             }
-            // player.lastKey = key
             break
           case 'ArrowLeft':
-            if (!player.keys.ArrowLeft.pressed) {
-              // player.keys.ArrowLeft.pressed = true
-            } else {
+            if (player.keys.ArrowLeft.pressed) {
               isEmit = false
             }
-            // player.lastKey = key
             break
-          // case " ":
-          // player.attack()
-          // break
-          // case "ArrowUp":
-          // if (!player.isJumping) {
-          //   player.isJumping = true
-          //   setTimeout(() => {
-          //     player.isJumping = false
-          //   }, 800)
-          //   player.velocity.y = -15
-          // }
-          // break
+          default:
+            break
         }
         return isEmit
       }
@@ -915,8 +881,20 @@ function MainPage() {
       async function setStateFighter({
         p1, p2
       }) {
-        console.log('receive action')
-        console.log(JSON.stringify(p1.keys))
+        console.log("p1", p1.isAttacking)
+        console.log("p2", p2.isAttacking)
+        if (p1.health < player.health) {
+          gsap.to("#playerHealth", {
+            width: (p1.health / player.hp * 100) + '%'
+          })
+          player.takeHit(p1.health)
+        }
+        if (p2.health < enemy.health) {
+          gsap.to("#enemyHealth", {
+            width: (p2.health / enemy.hp * 100) + '%'
+          })
+          enemy.takeHit(p2.health)
+        }
         player.updateFigures(p1)
         enemy.updateFigures(p2)
       }

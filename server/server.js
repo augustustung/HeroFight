@@ -880,9 +880,9 @@ function connected(socket) {
           roomList[roomId][who].velocity.y = -15
         }
         break;
-      // case " ":
-      // player.attack()
-      // break
+      case " ":
+        roomList[roomId][who].isAttacking = true;
+        break
       default:
         break;
     }
@@ -919,27 +919,24 @@ function connected(socket) {
     }
   }
 
-  function checkCollisionAndGetsHit(player, enemy, id) {
+  function checkCollisionAndGetsHit(player, enemy) {
     // detect for collision & enemy gets hit
-    if (
-      rectangularCollision({
-        rectangle1: player,
-        rectangle2: enemy
-      }) &&
-      player.isAttacking &&
-      player.framesCurrent === 4
-    ) {
-      enemy.takeHit(player.damage)
-      player.isAttacking = false
-      gsap.to(id, {
-        width: (enemy.health / enemy.hp * 100) + '%'
-      })
-    }
+    setTimeout(() => {
+      if (
+        rectangularCollision({
+          rectangle1: player,
+          rectangle2: enemy
+        }) &&
+        player.isAttacking
+      ) {
+        player.isAttacking = false
+      }
 
-    // if player misses
-    if (player.isAttacking && player.framesCurrent === 4) {
-      player.isAttacking = false
-    }
+      // if player misses
+      if (player.isAttacking) {
+        player.isAttacking = false
+      }
+    }, 1000)
   }
 
   function rectangularCollision({ rectangle1, rectangle2 }) {
@@ -958,23 +955,17 @@ function connected(socket) {
     checkMovement(fighter1);
     checkMovement(fighter2);
 
-    // checkCollisionAndGetsHit(
-    //   playerDetail.isHost ? player : enemy,
-    //   playerDetail.isHost ? enemy : player,
-    //   playerDetail.isHost ? "#enemyHealth" : "#playerHealth"
-    // );
-    // checkCollisionAndGetsHit(
-    //   playerDetail.isHost ? enemy : player,
-    //   playerDetail.isHost ? player : enemy,
-    //   playerDetail.isHost ? "#playerHealth" : "#enemyHealth"
-    // );
+    checkCollisionAndGetsHit(
+      fighter1, fighter2
+    );
+    checkCollisionAndGetsHit(
+      fighter2, fighter1
+    );
 
     // // end game based on health
-    // if (player.health <= 0 || enemy.health <= 0) {
-    //   if (!isDone) {
-    //     determineWinner()
-    //     handleGameOver()
-    //   }
+    // if (fighter1.health <= 0 || fighter2.health <= 0) {
+    //   determineWinner()
+    //   handleGameOver()
     // }
   }
 
